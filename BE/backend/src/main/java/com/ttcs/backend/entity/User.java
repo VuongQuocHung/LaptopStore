@@ -46,4 +46,12 @@ public class User {
 
     @Column(name = "reset_token_expiry")
     private LocalDateTime resetTokenExpiry;
+
+    // Thêm vào User.java
+    private boolean enabled = false;          // Mặc định chưa xác thực
+
+    @Column(unique = true)
+    private String verificationToken;
+
+    private LocalDateTime verificationTokenExpiry;
 }

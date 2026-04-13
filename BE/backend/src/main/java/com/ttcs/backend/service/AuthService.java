@@ -46,18 +46,34 @@ public class AuthService {
                 .fullName(request.getFullName().trim())
                 .phone(request.getPhone().trim())
                 .role(customerRole)
+                .enabled(false)                                          // Chưa xác thực
+                .verificationToken(UUID.randomUUID().toString())
+                .verificationTokenExpiry(LocalDateTime.now().plusHours(24))
                 .build();
 
         User savedUser = userRepository.save(user);
-        String token = jwtService.generateToken(savedUser.getEmail(), savedUser.getRole().getName());
 
+        // Gửi email xác nhận (async, không block response)
+        mailService.sendVerificationEmail(savedUser.getEmail(), savedUser.getVerificationToken());
+
+        // Trả về thông báo thay vì token (chưa được đăng nhập)
         return AuthResponse.builder()
-                .token(token)
-                .tokenType("Bearer")
+                .message("Đăng ký thành công! Vui lòng kiểm tra email để xác nhận tài khoản.")
                 .email(savedUser.getEmail())
-                .fullName(savedUser.getFullName())
-                .role(savedUser.getRole().getName())
                 .build();
+    }
+    public void verifyEmail(String token) {
+        User user = userRepository.findByVerificationToken(token)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Token không hợp lệ"));
+
+        if (user.getVerificationTokenExpiry().isBefore(LocalDateTime.now())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Token đã hết hạn");
+        }
+
+        user.setEnabled(true);
+        user.setVerificationToken(null);
+        user.setVerificationTokenExpiry(null);
+        userRepository.save(user);
     }
 
     public AuthResponse login(LoginRequest request) {
@@ -69,6 +85,10 @@ public class AuthService {
 
         User user = userRepository.findByEmail(authentication.getName())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Email hoac mat khau khong chinh xac"));
+
+        if (!user.isEnabled()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Tài khoản chưa được xác thực. Vui lòng kiểm tra email.");
+        }
 
         String token = jwtService.generateToken(user.getEmail(), user.getRole().getName());
 

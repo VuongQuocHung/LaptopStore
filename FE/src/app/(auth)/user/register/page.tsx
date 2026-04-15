@@ -35,7 +35,7 @@ export default function UserRegisterPage() {
       .then((res) => {
         // Đổi từ redirect sang hiện thông báo
         setSuccess(res.message || "Đăng ký thành công! Vui lòng kiểm tra email để xác nhận tài khoản.");
-        // KHÔNG router.push nữa
+        router.push('/user/login');
       })
       .catch((e: ApiError) => {
         setError(e?.message || "Đăng ký thất bại");

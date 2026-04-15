@@ -71,4 +71,12 @@ public class AuthController {
         authService.resetPassword(request);
         return ResponseEntity.ok("Password reset successfully");
     }
+    @GetMapping("/verify-email")
+    @Operation(summary = "Xác nhận email", description = "Xác thực tài khoản qua token trong email")
+    @ApiResponse(responseCode = "200", description = "Xác thực thành công")
+    @ApiResponse(responseCode = "400", description = "Token không hợp lệ hoặc đã hết hạn")
+    public ResponseEntity<String> verifyEmail(@RequestParam String token) {
+        authService.verifyEmail(token);
+        return ResponseEntity.ok("Xác thực email thành công! Bạn có thể đăng nhập.");
+    }
 }

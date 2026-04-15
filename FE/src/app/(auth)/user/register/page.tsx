@@ -17,7 +17,7 @@ export default function UserRegisterPage() {
     setError(null);
     setSuccess(null);
 
-    const form = event.currentTarget; 
+    const form = event.currentTarget;
     const formData = new FormData(form);
 
     const fullName = String(formData.get("fullName") ?? "").trim();
@@ -33,8 +33,9 @@ export default function UserRegisterPage() {
     setIsLoading(true);
     authApi.register({ fullName, email, phone, password })
       .then((res) => {
-        setSuccess(`Đăng ký thành công: ${res.fullName}`);
-        router.push("/user/login");
+        // Đổi từ redirect sang hiện thông báo
+        setSuccess(res.message || "Đăng ký thành công! Vui lòng kiểm tra email để xác nhận tài khoản.");
+        // KHÔNG router.push nữa
       })
       .catch((e: ApiError) => {
         setError(e?.message || "Đăng ký thất bại");

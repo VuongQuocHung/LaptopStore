@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { ApiError } from "@/lib/api";
+import { resolveImageUrl } from "@/lib/image";
 
 function CheckoutForm() {
   const router = useRouter();
@@ -246,7 +247,7 @@ function CheckoutForm() {
                 {cart.map((item) => (
                   <div key={item.id} className="flex gap-4 items-center">
                     <div className="w-16 h-16 bg-slate-50 rounded-xl overflow-hidden shrink-0 border border-slate-100 p-2">
-                      <img src={item.product.images?.[0]?.imageUrl || "/assets/images/loq.jpg"} className="w-full h-full object-contain" alt={item.product.name} />
+                      <img src={resolveImageUrl(item.product.images?.[0]?.imageUrl)} className="w-full h-full object-contain" alt={item.product.name} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-bold text-slate-900 truncate">{item.product.name}</p>

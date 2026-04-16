@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { ApiError } from "@/lib/api";
+import { resolveImageUrl } from "@/lib/image";
 
 function OrderDetail() {
   const { id } = useParams();
@@ -137,21 +138,62 @@ function OrderDetail() {
               </div>
               <div className="divide-y divide-slate-100">
                 {order.orderDetails?.map((item) => (
-                  <div key={item.id} className="p-8 flex gap-6 items-center">
-                    <div className="w-20 h-20 bg-slate-50 rounded-2xl p-2 border border-slate-100 shrink-0">
-                      <img 
-                        src={item.product?.images?.[0]?.imageUrl || "/assets/images/loq.jpg"} 
-                        alt={item.product?.name} 
+                  <div key={item.id} className="p-8 flex flex-col md:flex-row gap-6 items-start">
+                    <div className="w-28 h-28 md:w-32 md:h-32 bg-slate-50 rounded-2xl p-2 border border-slate-100 shrink-0 flex items-center justify-center overflow-hidden">
+                      <img
+                        src={resolveImageUrl(item.product?.images?.[0]?.imageUrl)}
+                        alt={item.product?.name || "product image"}
                         className="w-full h-full object-contain"
+                        onError={(e) => { const t = e.currentTarget as HTMLImageElement; t.onerror = null; t.src = '/assets/images/loq.jpg'; }}
                       />
                     </div>
+
                     <div className="flex-1 min-w-0">
                       <h4 className="font-bold text-slate-900 truncate hover:text-blue-600 transition-colors">
                         <Link href={`/product/${item.product?.id}`}>{item.product?.name}</Link>
                       </h4>
-                      <p className="text-sm text-slate-400 mt-1">Số lượng: <span className="text-slate-900 font-bold">x{item.quantity}</span></p>
+
+                      <div className="mt-2 text-sm text-slate-500 flex flex-wrap gap-3 items-center">
+                        {item.product?.brand?.name && (
+                          <span className="px-2 py-1 bg-slate-50 border border-slate-100 rounded-md text-xs">
+                            <strong className="font-semibold text-slate-700">Thương hiệu:</strong>
+                            <span className="ml-1">{item.product.brand.name}</span>
+                          </span>
+                        )}
+
+                        {item.product?.category?.name && (
+                          <span className="px-2 py-1 bg-slate-50 border border-slate-100 rounded-md text-xs">
+                            <strong className="font-semibold text-slate-700">Danh mục:</strong>
+                            <span className="ml-1">{item.product.category.name}</span>
+                          </span>
+                        )}
+
+                        <span className={`px-2 py-1 rounded-md border text-xs ${
+                          (item.product?.stock || 0) > 0 ? 'bg-green-50 border-green-100 text-green-700' : 'bg-red-50 border-red-100 text-red-700'
+                        }`}>
+                          Còn: {item.product?.stock ?? 0}
+                        </span>
+                      </div>
+
+                      <p className="text-sm text-slate-400 mt-2">Số lượng: <span className="text-slate-900 font-bold">x{item.quantity}</span></p>
+
+                      {item.product?.specification && (
+                        <div className="mt-3 text-sm text-slate-600 grid grid-cols-2 gap-2">
+                          {item.product.specification.cpu && (<div><span className="font-semibold">CPU:</span> <span className="ml-1">{item.product.specification.cpu}</span></div>)}
+                          {item.product.specification.ram && (<div><span className="font-semibold">RAM:</span> <span className="ml-1">{item.product.specification.ram}</span></div>)}
+                          {item.product.specification.storage && (<div><span className="font-semibold">Lưu trữ:</span> <span className="ml-1">{item.product.specification.storage}</span></div>)}
+                          {item.product.specification.screen && (<div><span className="font-semibold">Màn hình:</span> <span className="ml-1">{item.product.specification.screen}</span></div>)}
+                        </div>
+                      )}
+
+                      {item.product?.description && (
+                        <p className="mt-3 text-sm text-slate-500 max-w-xl">
+                          {item.product.description.length > 200 ? item.product.description.slice(0, 200) + '...' : item.product.description}
+                        </p>
+                      )}
                     </div>
-                    <div className="text-right">
+
+                    <div className="text-right md:text-right mt-4 md:mt-0">
                       <p className="font-black text-slate-900">
                         {new Intl.NumberFormat("vi-VN", {
                           style: "currency",

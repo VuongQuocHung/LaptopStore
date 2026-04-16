@@ -20,6 +20,7 @@ import {
   Loader2
 } from "lucide-react";
 import { ApiError } from "@/lib/api";
+import { resolveImageUrl } from "@/lib/image";
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -148,6 +149,7 @@ export default function AdminProductsPage() {
     e.preventDefault();
     setIsSubmitting(true);
     const formData = new FormData(e.currentTarget);
+    const finalImageUrl = imageUrl || (formData.get("imageUrl") as string);
     
     const productData: Partial<Product> = {
       name: formData.get("name") as string,
@@ -158,13 +160,20 @@ export default function AdminProductsPage() {
       brand: { id: Number(formData.get("brandId")) },
       category: { id: Number(formData.get("categoryId")) },
       specification: {
+        id: editingProduct?.specification?.id,
         cpu: formData.get("cpu") as string,
         ram: formData.get("ram") as string,
         storage: formData.get("storage") as string,
         vga: formData.get("vga") as string,
         screen: formData.get("screen") as string,
       } as ProductSpecification,
-      images: editingProduct?.images || [{ imageUrl: imageUrl || (formData.get("imageUrl") as string), isPrimary: true }]
+      images: finalImageUrl
+        ? [{
+            id: editingProduct?.images?.[0]?.id,
+            imageUrl: finalImageUrl,
+            isPrimary: true,
+          } as ProductImage]
+        : []
     };
 
     try {
@@ -260,7 +269,7 @@ export default function AdminProductsPage() {
                       <div className="flex items-center gap-4">
                         <div className="w-14 h-14 bg-slate-50 p-2 rounded-2xl border border-slate-200 shrink-0">
                           <img 
-                            src={p.images?.[0]?.imageUrl || "/assets/images/loq.jpg"} 
+                            src={resolveImageUrl(p.images?.[0]?.imageUrl)} 
                             className="w-full h-full object-contain" 
                             alt="" 
                           />
@@ -413,7 +422,7 @@ export default function AdminProductsPage() {
                     >
                       {imageUrl ? (
                         <div className="relative aspect-video flex items-center justify-center p-4">
-                          <img src={imageUrl} alt="Preview" className="max-h-full max-w-full object-contain rounded-xl shadow-lg" />
+                          <img src={resolveImageUrl(imageUrl)} alt="Preview" className="max-h-full max-w-full object-contain rounded-xl shadow-lg" />
                           <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
                             <button 
                               type="button"

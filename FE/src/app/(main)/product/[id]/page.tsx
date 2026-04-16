@@ -11,6 +11,7 @@ import {
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
+import { resolveImageUrl } from "@/lib/image";
 
 export default function ProductDetailPage() {
   const { id } = useParams();
@@ -191,14 +192,14 @@ export default function ProductDetailPage() {
           {/* IMAGE SECTION */}
           <div className="lg:col-span-7 space-y-4">
             <div className="bg-white p-8 rounded-3xl border border-slate-200 overflow-hidden shadow-sm group">
-              <img src={activeImage} className="w-full h-[400px] object-contain group-hover:scale-105 transition-transform duration-500" alt={product.name} />
+              <img src={resolveImageUrl(activeImage)} className="w-full h-[400px] object-contain group-hover:scale-105 transition-transform duration-500" alt={product.name} />
             </div>
 
             <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
               {product.images?.map((img, idx) => (
                 <button key={idx} onClick={() => setActiveImage(img.imageUrl || "")}
                   className={`w-24 h-24 rounded-2xl border-2 shrink-0 transition-all overflow-hidden bg-white p-2 ${activeImage === img.imageUrl ? "border-blue-600" : "border-slate-200 hover:border-slate-300 shadow-sm"}`}>
-                  <img src={img.imageUrl} className="w-full h-full object-contain" alt={`${product.name} ${idx}`} />
+                  <img src={resolveImageUrl(img.imageUrl)} className="w-full h-full object-contain" alt={`${product.name} ${idx}`} />
                 </button>
               ))}
             </div>
@@ -404,7 +405,7 @@ export default function ProductDetailPage() {
                 <Link key={p.id} href={`/product/${p.id}`}
                   className="group bg-white p-6 rounded-2xl border border-slate-200 hover:border-blue-200 hover:shadow-xl transition-all duration-300">
                   <div className="aspect-square bg-slate-50 rounded-xl mb-4 overflow-hidden p-4">
-                    <img src={p.images?.[0]?.imageUrl || "/assets/images/loq.jpg"} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500" alt={p.name} />
+                    <img src={resolveImageUrl(p.images?.[0]?.imageUrl)} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500" alt={p.name} />
                   </div>
                   <h3 className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors truncate">{p.name}</h3>
                   <p className="text-blue-600 font-black mt-2">

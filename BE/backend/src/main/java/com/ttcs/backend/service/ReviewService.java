@@ -1,6 +1,8 @@
 package com.ttcs.backend.service;
 
+import com.ttcs.backend.auth.dto.ReviewResponse;
 import com.ttcs.backend.entity.Review;
+import com.ttcs.backend.entity.User;
 import com.ttcs.backend.repository.ReviewRepository;
 import com.ttcs.backend.security.SecurityUtils;
 import com.ttcs.backend.specification.ReviewSpecs;
@@ -18,30 +20,35 @@ import java.util.List;
 public class ReviewService {
     private final ReviewRepository reviewRepository;
 
-    public List<Review> getAllReviews() {
-        return reviewRepository.findAll();
-    }
-
-    public Page<Review> getFilteredReviews(Long productId, Long userId, Integer rating, Pageable pageable) {
+    public Page<ReviewResponse> getFilteredReviews(Long productId, Long userId, Integer rating, Pageable pageable) {
         Specification<Review> spec = Specification.where(ReviewSpecs.withFetchData())
                 .and(ReviewSpecs.hasProductId(productId))
                 .and(ReviewSpecs.hasUserId(userId))
                 .and(ReviewSpecs.hasRating(rating));
-        return reviewRepository.findAll(spec, pageable);
+        return reviewRepository.findAll(spec, pageable).map(ReviewResponse::from);
     }
 
-    public Review getReviewById(Long id) {
-        return reviewRepository.findById(id).orElseThrow(() -> new RuntimeException("Review not found"));
+    public ReviewResponse getReviewById(Long id) {
+        return ReviewResponse.from(
+                reviewRepository.findById(id).orElseThrow(() -> new RuntimeException("Review not found"))
+        );
     }
 
-    public Review createReview(Review review) {
-        return reviewRepository.save(review);
+    public ReviewResponse createReview(Review review) {
+        Long currentUserId = SecurityUtils.getCurrentUserId()
+                .orElseThrow(() -> new AccessDeniedException("Vui lòng đăng nhập"));
+
+        User user = new User();
+        user.setId(currentUserId);
+        review.setUser(user);
+
+        return ReviewResponse.from(reviewRepository.save(review));
     }
 
-    public Review updateReview(Long id, Review reviewDetails) {
-        Review review = getReviewById(id);
+    public ReviewResponse updateReview(Long id, Review reviewDetails) {
+        Review review = reviewRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Review not found"));
 
-        // Authorization check: User can only update their own review
         Long currentUserId = SecurityUtils.getCurrentUserId()
                 .orElseThrow(() -> new AccessDeniedException("Vui lòng đăng nhập"));
 
@@ -51,13 +58,13 @@ public class ReviewService {
 
         review.setRating(reviewDetails.getRating());
         review.setComment(reviewDetails.getComment());
-        return reviewRepository.save(review);
+        return ReviewResponse.from(reviewRepository.save(review));
     }
 
     public void deleteReview(Long id) {
-        Review review = getReviewById(id);
+        Review review = reviewRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Review not found"));
 
-        // Authorization check: User can delete their own review OR Admin can delete any
         if (!SecurityUtils.hasRole("ADMIN")) {
             Long currentUserId = SecurityUtils.getCurrentUserId()
                     .orElseThrow(() -> new AccessDeniedException("Vui lòng đăng nhập"));

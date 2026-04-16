@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/roles")
+@RequestMapping("/api/roles") // Mọi phương thức bên dưới đều sẽ bắt đầu bằng /api/roles
 @RequiredArgsConstructor
 @Tag(name = "Role API", description = "Quản lý vai trò người dùng (Role)")
 public class RoleController {
@@ -35,7 +35,7 @@ public class RoleController {
         return ResponseEntity.ok(roleService.createRole(role));
     }
 
-    // 3. GET BY ID
+    // 3. GET BY ID - Lấy thông tin chi tiết một vai trò
     @GetMapping("/{id}")
     @Operation(summary = "Lấy thông tin vai trò theo ID", description = "Xem chi tiết thông tin của một quyền/vai trò thông qua ID")
     @ApiResponse(responseCode = "200", description = "Thành công")
@@ -64,3 +64,9 @@ public class RoleController {
         return ResponseEntity.noContent().build();
     }
 }
+
+// Client (Trình duyệt/Postman) gửi Request -> /api/roles
+// RoleController tiếp nhận và kiểm tra các tham số.
+// RoleController gọi hàm tương ứng trong RoleService.
+// RoleService xử lý logic (gọi đến Database qua Repository).
+// Dữ liệu trả ngược lại Controller --> Trả về JSON cho Client.

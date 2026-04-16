@@ -33,15 +33,18 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) {
         Role adminRole = roleRepository.findByName("ADMIN")
                 .orElseGet(() -> roleRepository.save(Role.builder().name("ADMIN").build()));
+        // Tìm role admin, nếu không tồn tại thì tạo mới role admin
 
         roleRepository.findByName("CUSTOMER")
                 .orElseGet(() -> roleRepository.save(Role.builder().name("CUSTOMER").build()));
 
-        String normalizedAdminEmail = adminEmail.trim().toLowerCase(Locale.ROOT);
+        String normalizedAdminEmail = adminEmail.trim().toLowerCase(Locale.ROOT); // chuẩn hóa email admin
+
+        // Kiểm tra nếu chưa có user admin nào với email đã chuẩn hóa, thì tạo mới user admin
         if (!userRepository.existsByEmail(normalizedAdminEmail)) {
             User admin = User.builder()
                     .email(normalizedAdminEmail)
-                    .password(passwordEncoder.encode(adminPassword))
+                    .password(passwordEncoder.encode(adminPassword)) // mã hóa mk với BCrypt
                     .fullName(adminFullName)
                     .phone("0000000000")
                     .role(adminRole)
@@ -50,3 +53,14 @@ public class DataInitializer implements CommandLineRunner {
         }
     }
 }
+
+// App start
+//    ↓
+// run() chạy
+//    ↓
+// Check role ADMIN → tạo nếu chưa có
+// Check role CUSTOMER → tạo nếu chưa có
+//    ↓
+// Check user admin tồn tại chưa
+//    ↓
+// Nếu chưa → tạo admin

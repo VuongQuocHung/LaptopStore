@@ -6,7 +6,7 @@ import "./globals.css";
 import { Providers } from "@/components/Providers";
 
 export const metadata: Metadata = {
-  title: "VPH STORE",
+  title: "LAPTOP STORE",
   description: "Project TTCS: Xây dựng website bán laptop",
 };
 

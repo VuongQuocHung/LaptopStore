@@ -21,11 +21,6 @@ public class CustomUserDetailsService implements UserDetailsService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy user: " + email));
 
-        return org.springframework.security.core.userdetails.User.builder()
-                .username(user.getEmail())
-                .password(user.getPassword())
-                .roles(user.getRole().getName())
-                .disabled(!user.isEnabled()) // enabled=false → Spring tự chặn login
-                .build();
+        return UserPrincipal.create(user);
     }
 }

@@ -1,5 +1,6 @@
 package com.ttcs.backend.controller;
 
+import com.ttcs.backend.auth.dto.ReviewResponse;
 import com.ttcs.backend.entity.Review;
 import com.ttcs.backend.service.ReviewService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -20,11 +21,10 @@ import org.springframework.web.bind.annotation.*;
 public class ReviewController {
     private final ReviewService reviewService;
 
-    // 1. GET ALL (with filtering & pagination)
     @GetMapping
-    @Operation(summary = "Lấy danh sách đánh giá", description = "Trả về danh sách đánh giá hỗ trợ lọc theo sản phẩm, người dùng, số sao và phân trang")
+    @Operation(summary = "Lấy danh sách đánh giá")
     @ApiResponse(responseCode = "200", description = "Thành công")
-    public ResponseEntity<Page<Review>> getReviews(
+    public ResponseEntity<Page<ReviewResponse>> getReviews(
             @RequestParam(required = false) Long productId,
             @RequestParam(required = false) Long userId,
             @RequestParam(required = false) Integer rating,
@@ -38,39 +38,30 @@ public class ReviewController {
         return ResponseEntity.ok(reviewService.getFilteredReviews(productId, userId, rating, pageable));
     }
 
-    // 2. POST CREATE
     @PostMapping
-    @Operation(summary = "Tạo mới đánh giá", description = "Thêm một đánh giá mới cho sản phẩm")
+    @Operation(summary = "Tạo mới đánh giá")
     @ApiResponse(responseCode = "200", description = "Thành công")
-    @ApiResponse(responseCode = "400", description = "Lỗi dữ liệu đầu vào")
-    public ResponseEntity<Review> createReview(@RequestBody Review review) {
+    public ResponseEntity<ReviewResponse> createReview(@RequestBody Review review) {
         return ResponseEntity.ok(reviewService.createReview(review));
     }
 
-    // 3. GET BY ID
     @GetMapping("/{id}")
-    @Operation(summary = "Lấy đánh giá theo ID", description = "Lấy thông tin chi tiết của một đánh giá thông qua ID")
+    @Operation(summary = "Lấy đánh giá theo ID")
     @ApiResponse(responseCode = "200", description = "Thành công")
-    @ApiResponse(responseCode = "404", description = "Không tìm thấy đánh giá")
-    public ResponseEntity<Review> getReviewById(@PathVariable Long id) {
+    public ResponseEntity<ReviewResponse> getReviewById(@PathVariable Long id) {
         return ResponseEntity.ok(reviewService.getReviewById(id));
     }
 
-    // 4. PUT/PATCH UPDATE
     @PutMapping("/{id}")
-    @Operation(summary = "Cập nhật đánh giá", description = "Cập nhật nội dung của một đánh giá đã tồn tại dựa trên ID")
+    @Operation(summary = "Cập nhật đánh giá")
     @ApiResponse(responseCode = "200", description = "Thành công")
-    @ApiResponse(responseCode = "400", description = "Lỗi dữ liệu đầu vào")
-    @ApiResponse(responseCode = "404", description = "Không tìm thấy đánh giá")
-    public ResponseEntity<Review> updateReview(@PathVariable Long id, @RequestBody Review review) {
+    public ResponseEntity<ReviewResponse> updateReview(@PathVariable Long id, @RequestBody Review review) {
         return ResponseEntity.ok(reviewService.updateReview(id, review));
     }
 
-    // 5. DELETE
     @DeleteMapping("/{id}")
-    @Operation(summary = "Xóa đánh giá", description = "Xóa một đánh giá khỏi hệ thống thông qua ID")
+    @Operation(summary = "Xóa đánh giá")
     @ApiResponse(responseCode = "204", description = "Xóa thành công")
-    @ApiResponse(responseCode = "404", description = "Không tìm thấy đánh giá")
     public ResponseEntity<Void> deleteReview(@PathVariable Long id) {
         reviewService.deleteReview(id);
         return ResponseEntity.noContent().build();

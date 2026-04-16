@@ -23,6 +23,7 @@ public class UserPrincipal implements UserDetails {
     private String email;
     private String password;
     private Collection<? extends GrantedAuthority> authorities;
+    private boolean enabled;
 
     public static UserPrincipal create(User user) {
         String roleName = user.getRole().getName().toUpperCase(Locale.ROOT);
@@ -33,6 +34,7 @@ public class UserPrincipal implements UserDetails {
                 .email(user.getEmail())
                 .password(user.getPassword())
                 .authorities(authorities)
+                .enabled(user.isEnabled())
                 .build();
     }
 
@@ -68,6 +70,6 @@ public class UserPrincipal implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return enabled;
     }
 }

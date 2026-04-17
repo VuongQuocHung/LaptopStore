@@ -37,6 +37,14 @@ public class AuthController {
         return ResponseEntity.ok(authService.login(request));
     }
 
+    @PostMapping("/google")
+    @Operation(summary = "Đăng nhập bằng Google", description = "Xác thực bằng Google idToken và trả về JWT nội bộ")
+    @ApiResponse(responseCode = "200", description = "Đăng nhập thành công")
+    @ApiResponse(responseCode = "401", description = "Google token không hợp lệ")
+    public ResponseEntity<AuthResponse> googleLogin(@Valid @RequestBody GoogleLoginRequest request) {
+        return ResponseEntity.ok(authService.googleLogin(request));
+    }
+
     @PostMapping("/logout")
     @Operation(summary = "Đăng xuất", description = "Đăng xuất khỏi hệ thống (Front-end sẽ xóa token)")
     @ApiResponse(responseCode = "200", description = "Đăng xuất thành công")

@@ -9,22 +9,22 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "users")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Getter // Tự sinh getter
+@Setter // Tự sinh setter
+@NoArgsConstructor // Tạo constructor không tham số 
+@AllArgsConstructor // Tạo constructor đầy đủ tham số
+@Builder // Tạo builder
 public class User {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id // khóa chính
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // auto increment
     private Long id;
 
     @Column(nullable = false, unique = true, length = 100)
     private String email;
 
     @Column(nullable = false)
-    @JsonIgnore
+    @JsonIgnore // không trả password về fe
     private String password;
 
     @Column(name = "full_name", length = 100)
@@ -33,7 +33,10 @@ public class User {
     @Column(length = 20)
     private String phone;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.EAGER) // EAGER vì thường cần thông tin role khi lấy user
+    // VD : User user = userRepository.findById(1) tương đương với :
+    // SELECT * FROM users
+    // JOIN roles ON ...
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;
 
@@ -50,8 +53,42 @@ public class User {
     // Thêm vào User.java
     private boolean enabled = false;          // Mặc định chưa xác thực
 
+    // Reset password token
     @Column(unique = true)
     private String verificationToken;
 
     private LocalDateTime verificationTokenExpiry;
+
+    // Đăng ký
+    //     ↓
+    // Tạo verificationToken
+    //     ↓
+    // Gửi email link
+    //     ↓
+    // User click
+    //     ↓
+    // enabled = true
 }
+
+// Luồng hoạt động trong thực tế : 
+// Đăng ký:
+// POST /register
+//    ↓
+// tạo user (enabled = false)
+//    ↓
+// tạo verificationToken
+//    ↓
+// gửi email
+
+// Xác thực email:
+// GET /verify?token=abc
+//    ↓
+// check token
+//    ↓
+// enabled = true
+
+// POST /login
+//    ↓
+// check email + password
+//    ↓
+// check enabled == true

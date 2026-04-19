@@ -29,7 +29,7 @@ public class UserController {
     @GetMapping
     @Operation(summary = "Lấy danh sách người dùng", description = "Trả về danh sách người dùng hỗ trợ lọc theo email, tên, số điện thoại, vai trò và phân trang")
     @ApiResponse(responseCode = "200", description = "Thành công")
-    public ResponseEntity<Page<User>> getUsers(
+    public ResponseEntity<Page<User>> getUsers( // Query params for filtering & pagination
             @RequestParam(required = false) String email,
             @RequestParam(required = false) String fullName,
             @RequestParam(required = false) String phone,
@@ -39,9 +39,11 @@ public class UserController {
             @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "asc") String sortDir) {
 
-        Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+        Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending(); 
         Pageable pageable = PageRequest.of(page, size, sort);
-        return ResponseEntity.ok(userService.getFilteredUsers(email, fullName, phone, roleId, pageable));
+
+
+        return ResponseEntity.ok(userService.getFilteredUsers(email, fullName, phone, roleId, pageable));// nhận request và truyền xuống Service
     }
 
     // 2. POST CREATE

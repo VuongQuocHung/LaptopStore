@@ -112,6 +112,10 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface GoogleLoginRequest {
+  idToken: string;
+}
+
 export interface ForgotPasswordRequest {
   email: string;
 }

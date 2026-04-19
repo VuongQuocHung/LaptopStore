@@ -1,8 +1,8 @@
 "use client";
-import React, { useState, useEffect, Suspense } from "react";
-import { FcGoogle } from "react-icons/fc";
+import React, { useState, Suspense } from "react";
+import { GoogleLogin, type CredentialResponse } from "@react-oauth/google";
 import { FaApple, FaFacebook } from "react-icons/fa";
-import { writeAuthToken, type ApiError } from "@/lib/api";
+import { type ApiError } from "@/lib/api";
 import { authApi } from "@/lib/api-endpoints";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -25,6 +25,7 @@ function UserLoginContent() {
   const searchParams = useSearchParams();
   const { login: authLogin } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -59,6 +60,36 @@ function UserLoginContent() {
         setError(e?.message || "Đăng nhập thất bại");
       })
       .finally(() => setIsLoading(false));
+  };
+
+  const handleGoogleSuccess = (credentialResponse: CredentialResponse) => {
+    const idToken = credentialResponse.credential;
+    if (!idToken) {
+      setError("Không lấy được thông tin đăng nhập Google.");
+      return;
+    }
+
+    setError(null);
+    setSuccess(null);
+    setIsGoogleLoading(true);
+
+    authApi
+      .googleLogin({ idToken })
+      .then((res) => {
+        authLogin(res);
+        setSuccess(`Đăng nhập Google thành công: ${res.fullName}`);
+
+        const callbackUrl = searchParams.get("callbackUrl");
+        router.push(callbackUrl ? decodeURIComponent(callbackUrl) : "/");
+      })
+      .catch((e: ApiError) => {
+        setError(e?.message || "Đăng nhập Google thất bại");
+      })
+      .finally(() => setIsGoogleLoading(false));
+  };
+
+  const handleGoogleError = () => {
+    setError("Đăng nhập Google bị hủy hoặc thất bại.");
   };
 
   return (
@@ -173,16 +204,20 @@ function UserLoginContent() {
             </div>
 
             <div className="flex justify-center gap-[10px]">
-              <button type="button">
-                <FcGoogle size={30} />
-              </button>
-              <button type="button">
-                <FaApple size={30} />
-              </button>
-              <button type="button">
-                <FaFacebook size={30} color="#1877F2" />
-              </button>
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleError}
+                theme="outline"
+                shape="rectangular"
+                size="large"
+                text="signin_with"
+              />
             </div>
+            {isGoogleLoading ? (
+              <p className="text-[12px] text-[#666] font-[600] text-center mt-[10px]">
+                Đang xác thực Google...
+              </p>
+            ) : null}
           </div>
         </div>
       </div>

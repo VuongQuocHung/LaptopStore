@@ -84,6 +84,7 @@ public class UserService {
         user.setEmail(normalizedEmail);
         user.setFullName(userDetails.getFullName());
         user.setPhone(userDetails.getPhone());
+        user.setEnabled(userDetails.isEnabled());
         user.setRole(userDetails.getRole());
 
         if (userDetails.getPassword() != null && !userDetails.getPassword().isBlank()) {

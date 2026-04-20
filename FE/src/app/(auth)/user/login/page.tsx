@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, Suspense } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import { GoogleLogin, type CredentialResponse } from "@react-oauth/google";
 import { FaApple, FaFacebook } from "react-icons/fa";
 import { type ApiError } from "@/lib/api";
@@ -28,6 +28,20 @@ function UserLoginContent() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  useEffect(() => {
+    const verified = searchParams.get("verified");
+    if (verified === "1") {
+      setError(null);
+      setSuccess("Email đã được xác nhận thành công. Bạn có thể đăng nhập.");
+      return;
+    }
+
+    if (verified === "0") {
+      setSuccess(null);
+      setError("Link xác nhận không hợp lệ hoặc đã hết hạn.");
+    }
+  }, [searchParams]);
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();

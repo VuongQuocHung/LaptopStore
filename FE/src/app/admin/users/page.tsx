@@ -45,12 +45,14 @@ export default function AdminUsersPage() {
   const [roles, setRoles] = useState<Role[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
   const [formMode, setFormMode] = useState<FormMode>("create");
   const [editingUserId, setEditingUserId] = useState<number | null>(null);
   const [formData, setFormData] = useState<UserFormData>(initialFormData);
@@ -222,19 +224,30 @@ export default function AdminUsersPage() {
     }
   };
 
-  const handleDelete = async (user: User) => {
-    if (!user.id) return;
-    const confirmed = window.confirm(`Bạn có chắc muốn xóa tài khoản ${user.email}?`);
-    if (!confirmed) return;
+  const openDeleteConfirm = (user: User) => {
+    setDeleteTarget(user);
+  };
+
+  const closeDeleteConfirm = () => {
+    setDeleteTarget(null);
+    setIsDeleting(false);
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget?.id) return;
 
     setError(null);
     setSuccess(null);
+    setIsDeleting(true);
     try {
-      await userApi.delete(user.id);
+      await userApi.delete(deleteTarget.id);
       setSuccess("Đã xóa người dùng thành công");
+      closeDeleteConfirm();
       await fetchUsers();
     } catch (err) {
       setError(parseApiError(err, "Không thể xóa người dùng"));
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -367,7 +380,7 @@ export default function AdminUsersPage() {
                           <Pencil className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => handleDelete(u)}
+                          onClick={() => openDeleteConfirm(u)}
                           className="p-2.5 text-red-600 bg-red-50 rounded-xl hover:bg-red-600 hover:text-white transition"
                           title="Xóa người dùng"
                         >
@@ -517,6 +530,48 @@ export default function AdminUsersPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      ) : null}
+
+      {deleteTarget ? (
+        <div className="fixed inset-0 z-[60] bg-slate-900/50 backdrop-blur-[2px] flex items-center justify-center p-4">
+          <div className="w-full max-w-lg bg-white rounded-3xl border border-slate-200 shadow-2xl overflow-hidden">
+            <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
+              <h2 className="text-xl font-black tracking-tighter text-slate-900">Xác nhận xóa tài khoản</h2>
+              <button
+                onClick={closeDeleteConfirm}
+                className="w-9 h-9 rounded-xl bg-slate-100 text-slate-500 hover:bg-slate-900 hover:text-white transition flex items-center justify-center"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-6">
+              <p className="text-sm text-slate-700 leading-relaxed font-medium">
+                Nếu xóa tài khoản này thì toàn bộ dữ liệu về đơn hàng, sản phẩm của tài khoản cũng bị xóa theo, bạn có chắc chắn muốn xóa không ?
+              </p>
+              <p className="text-xs text-slate-400 mt-3 font-bold">Tài khoản: {deleteTarget.email}</p>
+
+              <div className="pt-6 flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  autoFocus
+                  onClick={closeDeleteConfirm}
+                  className="px-5 py-3 rounded-2xl bg-red-600 text-white font-black uppercase tracking-widest text-xs hover:bg-red-700 disabled:opacity-60 transition"
+                >
+                  Không
+                </button>
+                <button
+                  type="button"
+                  disabled={isDeleting}
+                  onClick={handleDelete}
+                  className="px-5 py-3 rounded-2xl bg-slate-100 text-slate-700 font-black uppercase tracking-widest text-xs hover:bg-slate-200 transition"
+                >
+                  {isDeleting ? "Đang xóa..." : "Xóa"}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       ) : null}

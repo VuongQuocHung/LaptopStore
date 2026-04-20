@@ -1,7 +1,11 @@
 package com.ttcs.backend.service;
 
 import com.ttcs.backend.auth.dto.UserResponse;
+import com.ttcs.backend.entity.Order;
+import com.ttcs.backend.entity.Review;
 import com.ttcs.backend.entity.User;
+import com.ttcs.backend.repository.OrderRepository;
+import com.ttcs.backend.repository.ReviewRepository;
 import com.ttcs.backend.repository.UserRepository;
 import com.ttcs.backend.security.SecurityUtils;
 import com.ttcs.backend.specification.UserSpecs;
@@ -13,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -22,6 +27,8 @@ import java.util.Locale;
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
+    private final OrderRepository orderRepository;
+    private final ReviewRepository reviewRepository;
     private final PasswordEncoder passwordEncoder;
 
     public List<User> getAllUsers() {
@@ -94,8 +101,26 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    @Transactional
     public void deleteUser(Long id) {
         User user = getUserById(id);
+
+        Long currentUserId = SecurityUtils.getCurrentUserId().orElse(null);
+        if (currentUserId != null && currentUserId.equals(id)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Khong the tu xoa tai khoan dang dang nhap");
+        }
+
+        // Remove child records first to satisfy foreign key constraints.
+        List<Review> reviews = reviewRepository.findByUserId(id);
+        if (!reviews.isEmpty()) {
+            reviewRepository.deleteAll(reviews);
+        }
+
+        List<Order> orders = orderRepository.findByUserId(id);
+        if (!orders.isEmpty()) {
+            orderRepository.deleteAll(orders);
+        }
+
         userRepository.delete(user);
     }
 

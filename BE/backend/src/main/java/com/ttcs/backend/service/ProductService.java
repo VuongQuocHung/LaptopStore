@@ -2,6 +2,7 @@ package com.ttcs.backend.service;
 
 import com.ttcs.backend.entity.Product;
 import com.ttcs.backend.entity.ProductImage;
+import com.ttcs.backend.entity.ProductSpecification;
 import com.ttcs.backend.repository.ProductRepository;
 import com.ttcs.backend.specification.ProductSpecs;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +21,7 @@ public class ProductService {
     private final ProductRepository productRepository;
 
     public List<Product> getAllProducts() {
-        return productRepository.findAll();
+        return productRepository.findAll(ProductSpecs.withFetchSpecs());
     }
 
     public Page<Product> getFilteredProducts(
@@ -43,7 +44,8 @@ public class ProductService {
     }
 
     public Product getProductById(Long id) {
-        return productRepository.findById(id).orElseThrow(() -> new RuntimeException("Product not found"));
+        return productRepository.findWithDetailsById(id)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
     }
 
     public Product createProduct(Product product) {
@@ -61,7 +63,8 @@ public class ProductService {
         product.setBrand(productDetails.getBrand());
         product.setCategory(productDetails.getCategory());
         product.setImages(productDetails.getImages());
-        product.setSpecification(productDetails.getSpecification());
+
+        mergeSpecification(product, productDetails.getSpecification());
 
         bindChildReferences(product);
         return productRepository.save(product);
@@ -94,5 +97,30 @@ public class ProductService {
         }
 
         product.setImages(normalizedImages);
+    }
+
+    // Để tránh việc tạo mới một ProductSpecification khi cập nhật sản phẩm, chúng ta sẽ merge dữ liệu vào thực thể đã tồn tại nếu có.
+    private void mergeSpecification(Product product, ProductSpecification incomingSpec) {
+        if (incomingSpec == null) {
+            product.setSpecification(null);
+            return;
+        }
+
+        ProductSpecification currentSpec = product.getSpecification();
+        if (currentSpec == null) {
+            currentSpec = new ProductSpecification();
+        }
+
+        // Chỉ cập nhật các trường thông số kỹ thuật, không thay đổi liên kết với Product
+        currentSpec.setCpu(incomingSpec.getCpu());
+        currentSpec.setRam(incomingSpec.getRam());
+        currentSpec.setStorage(incomingSpec.getStorage());
+        currentSpec.setVga(incomingSpec.getVga());
+        currentSpec.setScreen(incomingSpec.getScreen());
+        currentSpec.setOs(incomingSpec.getOs());
+        currentSpec.setBattery(incomingSpec.getBattery());
+        currentSpec.setWeight(incomingSpec.getWeight());
+
+        product.setSpecification(currentSpec);
     }
 }

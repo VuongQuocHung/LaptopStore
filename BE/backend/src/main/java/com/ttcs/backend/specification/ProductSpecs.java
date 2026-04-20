@@ -37,7 +37,7 @@ public class ProductSpecs {
     private static Specification<Product> hasSpec(String field, List<String> values) {
         return (root, query, cb) -> {
             if (values == null || values.isEmpty()) return null;
-            // Join only once per specification attribute if possible, but distinct criteria builder logic is easier
+            // Join với ProductSpecification để lọc theo các trường thông số kỹ thuật
             Join<Product, ProductSpecification> specJoin = root.join("specification", JoinType.LEFT);
             List<Predicate> predicates = new ArrayList<>();
             for (String val : values) {
@@ -55,12 +55,15 @@ public class ProductSpecs {
 
     public static Specification<Product> withFetchSpecs() {
         return (root, query, cb) -> {
-            // Prevent fetch in count queries
+            // Chỉ thêm fetch nếu kết quả không phải là count query để tránh lỗi khi đếm
             Class<?> resultType = query.getResultType();
             if (resultType != Long.class && resultType != long.class) {
                 root.fetch("specification", JoinType.LEFT);
                 root.fetch("brand", JoinType.LEFT);
                 root.fetch("category", JoinType.LEFT);
+                // Nếu cần thiết, có thể thêm fetch cho images nhưng chú ý đến hiệu suất
+                root.fetch("images", JoinType.LEFT);
+                query.distinct(true);
             }
             return null;
         };

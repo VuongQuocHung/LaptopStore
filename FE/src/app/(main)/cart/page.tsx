@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
+import { resolveImageUrl } from "@/lib/image";
 import { 
   Trash2, 
   Minus, 
@@ -56,7 +57,7 @@ export default function CartPage() {
               >
                 <div className="w-24 h-24 bg-slate-50 rounded-2xl overflow-hidden shrink-0 border border-slate-100">
                   <img 
-                    src={item.product.images?.[0]?.imageUrl || "/assets/images/loq.jpg"} 
+                    src={resolveImageUrl(item.product.images?.[0]?.imageUrl)} 
                     alt={item.product.name} 
                     className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500" 
                   />

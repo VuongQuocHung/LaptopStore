@@ -50,7 +50,8 @@ public class OrderService {
     }
 
     public Order getOrderById(Long id) {
-        Order order = orderRepository.findById(id)
+        // Sử dụng phương thức tùy chỉnh với EntityGraph để lấy đơn hàng kèm chi tiết 
+        Order order = orderRepository.findWithDetailsById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đơn hàng"));
 
         // Kiểm tra quyền truy cập: ADMIN xem được tất cả, USER chỉ xem được đơn của mình
@@ -77,7 +78,7 @@ public class OrderService {
         
         order.setUser(currentUser);
 
-        // 3. Thiết lập quan hệ 2 chiều giữa Order và OrderDetail
+        // 3. Thiết lập quan hệ 2 chiều giữa Order và OrderDetai
         if (order.getOrderDetails() != null) {
             order.getOrderDetails().forEach(detail -> detail.setOrder(order));
         }

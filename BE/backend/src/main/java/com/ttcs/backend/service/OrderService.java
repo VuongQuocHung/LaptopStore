@@ -1,9 +1,12 @@
 package com.ttcs.backend.service;
 
 import com.ttcs.backend.entity.Order;
+import com.ttcs.backend.entity.OrderDetail;
 import com.ttcs.backend.entity.OrderStatus;
+import com.ttcs.backend.entity.Product;
 import com.ttcs.backend.entity.User;
 import com.ttcs.backend.repository.OrderRepository;
+import com.ttcs.backend.repository.ProductRepository;
 import com.ttcs.backend.repository.UserRepository;
 import com.ttcs.backend.specification.OrderSpecs;
 import com.ttcs.backend.security.SecurityUtils;
@@ -14,6 +17,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
@@ -23,6 +27,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class OrderService {
     private final OrderRepository orderRepository;
+    private final ProductRepository productRepository;
     private final UserRepository userRepository;
 
     public List<Order> getAllOrders() {
@@ -30,7 +35,7 @@ public class OrderService {
     }
 
     public Page<Order> getFilteredOrders(OrderStatus status, Long userId, String phoneNumber, BigDecimal minAmount, BigDecimal maxAmount, Pageable pageable) {
-        // Authorization check: if user is not an Admin, they can only see their own orders
+        // Nếu không phải ADMIN, chỉ được xem đơn hàng của chính mình
         if (!SecurityUtils.hasRole("ADMIN")) {
             userId = SecurityUtils.getCurrentUserId()
                     .orElseThrow(() -> new AccessDeniedException("Vui lòng đăng nhập để xem đơn hàng"));
@@ -48,7 +53,7 @@ public class OrderService {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đơn hàng"));
 
-        // Authorization check: User can only see their own order unless they are an Admin
+        // Kiểm tra quyền truy cập: ADMIN xem được tất cả, USER chỉ xem được đơn của mình
         if (!SecurityUtils.hasRole("ADMIN")) {
             Long currentUserId = SecurityUtils.getCurrentUserId()
                     .orElseThrow(() -> new AccessDeniedException("Vui lòng đăng nhập để xem đơn hàng"));
@@ -62,17 +67,17 @@ public class OrderService {
     }
 
     public Order createOrder(Order order) {
-        // 1. Set default status
+        // 1. Mặc định trạng thái là PENDING khi tạo mới
         order.setStatus(OrderStatus.PENDING);
 
-        // 2. Set current user automatically for security
+        // 2. Gán user hiện tại làm người tạo đơn
         User currentUser = SecurityUtils.getCurrentUserId()
                 .map(id -> userRepository.findById(id).orElse(null))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Vui lòng đăng nhập để đặt hàng"));
         
         order.setUser(currentUser);
 
-        // 3. Link order details back to this order if they exist
+        // 3. Thiết lập quan hệ 2 chiều giữa Order và OrderDetail
         if (order.getOrderDetails() != null) {
             order.getOrderDetails().forEach(detail -> detail.setOrder(order));
         }
@@ -80,8 +85,30 @@ public class OrderService {
         return orderRepository.save(order);
     }
 
+    @Transactional
     public Order updateOrderStatus(Long id, OrderStatus status) {
         Order order = getOrderById(id);
+
+        // Khi chuyển sang APPROVED, trừ tồn kho (chỉ khi trước đó chưa APPROVED)
+        if (status == OrderStatus.APPROVED && order.getStatus() != OrderStatus.APPROVED) {
+            if (order.getOrderDetails() != null) {
+                System.out.println(order.getOrderDetails());
+                for (OrderDetail detail : order.getOrderDetails()) {
+                    Product product = detail.getProduct();
+                    if (product == null) continue;
+
+                    Integer currentStock = product.getStock() == null ? 0 : product.getStock();
+                    if (currentStock < detail.getQuantity()) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                                "Không đủ tồn kho cho sản phẩm " + (product.getName() == null ? product.getId() : product.getName()));
+                    }
+
+                    product.setStock(currentStock - detail.getQuantity());
+                    productRepository.save(product);
+                }
+            }
+        }
+
         order.setStatus(status);
         return orderRepository.save(order);
     }

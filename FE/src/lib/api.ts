@@ -11,8 +11,6 @@ function getApiBaseUrl(): string {
   return envUrl && envUrl.trim().length > 0 ? envUrl : DEFAULT_BASE_URL;
 }
 
-// readAuthToken ưu tiên auth.token, fallback đọc auth.user.token rồi ghi lại auth.token.
-// Mục đích: giảm lỗi thiếu Bearer token gây 403.
 function readAuthToken(): string | null {
   if (typeof window === "undefined") return null;
 
@@ -21,7 +19,6 @@ function readAuthToken(): string | null {
     return directToken;
   }
 
-  // Backward-compatible fallback for sessions that only stored auth.user.
   const savedUser = localStorage.getItem("auth.user");
   if (!savedUser) return null;
 
@@ -32,7 +29,7 @@ function readAuthToken(): string | null {
       return parsed.token;
     }
   } catch {
-    // Ignore parse errors and treat as unauthenticated.
+    // Ignore parse errors
   }
 
   return null;
@@ -90,7 +87,9 @@ export async function apiFetch<T>(
 
     const message =
       (typeof firstFieldError === "string" && firstFieldError) ||
-      (typeof data === "object" && data !== null && "message" in data && typeof (data as Record<string, unknown>).message === "string" ? (data as Record<string, string>).message : null) ||
+      (typeof data === "object" && data !== null && "message" in data && typeof (data as Record<string, unknown>).message === "string"
+        ? (data as Record<string, string>).message
+        : null) ||
       res.statusText ||
       "Request failed";
 
@@ -119,6 +118,12 @@ export const apiClient = {
     apiFetch<T>(url, {
       ...options,
       method: "PUT",
+      body: body ? JSON.stringify(body) : undefined,
+    }),
+  PATCH: <T>(url: string, body?: unknown, options?: RequestInit & { auth?: boolean }) =>
+    apiFetch<T>(url, {
+      ...options,
+      method: "PATCH",
       body: body ? JSON.stringify(body) : undefined,
     }),
   DELETE: <T>(url: string, options?: RequestInit & { auth?: boolean }) =>

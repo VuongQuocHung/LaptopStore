@@ -125,3 +125,53 @@ export const fileApi = {
     return apiClient.POST<{ url: string }>("/api/files/upload", formData, { auth: true });
   },
 };
+
+// Types cho Voucher
+export interface VoucherTier {
+  id: number;
+  name: string;
+  minSpend: number;
+  discountPct: number;
+  validityDays: number;
+}
+
+export interface Voucher {
+  id: number;
+  code: string;
+  tierName: string;
+  discountPct: number;
+  issuedAt: string;
+  expiresAt: string;
+  status: "ACTIVE" | "USED" | "EXPIRED";
+}
+
+export interface ApplyVoucherResult {
+  voucherId: number;
+  code: string;
+  discountPct: number;
+  discountAmount: number;
+  finalAmount: number;
+}
+
+export const voucherApi = {
+  // ADMIN
+  getAllVouchers: (params?: { status?: string; page?: number; size?: number }) =>
+    apiClient.GET<{ content: Voucher[]; totalPages: number }>(
+      `/api/admin/vouchers${toQueryString(params as Record<string, unknown>)}`,
+      { auth: true }
+    ),
+  getTiers: () => apiClient.GET<VoucherTier[]>("/api/admin/vouchers/tiers", { auth: true }),
+  updateTier: (id: number, data: Partial<VoucherTier>) =>
+    apiClient.PUT<VoucherTier>(`/api/admin/vouchers/tiers/${id}`, data, { auth: true }),
+  grantManual: (data: { userId: number; tierId: number }) =>
+    apiClient.POST<Voucher>("/api/admin/vouchers/grant", data, { auth: true }),
+  revokeVoucher: (id: number) =>
+    apiClient.PATCH(`/api/admin/vouchers/${id}/revoke`, null, { auth: true }),
+  deleteVoucher: (id: number) =>
+    apiClient.DELETE(`/api/admin/vouchers/${id}`, { auth: true }),
+
+  // CUSTOMER
+  getMyVouchers: () => apiClient.GET<Voucher[]>("/api/vouchers/my", { auth: true }),
+  applyVoucher: (code: string, orderAmount: number) =>
+    apiClient.POST<ApplyVoucherResult>("/api/vouchers/apply", { code, orderAmount }, { auth: true }),
+};

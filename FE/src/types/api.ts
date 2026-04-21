@@ -6,6 +6,8 @@ export interface Role {
 export interface User {
   id?: number;
   email?: string;
+  password?: string;
+  enabled?: boolean;
   fullName?: string;
   phone?: string;
   role?: Role;
@@ -105,6 +107,7 @@ export interface AuthResponse {
   email?: string;
   fullName?: string;
   role?: string;
+  message?: string;
 }
 
 export interface LoginRequest {

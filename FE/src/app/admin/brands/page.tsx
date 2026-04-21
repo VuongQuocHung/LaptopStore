@@ -27,7 +27,7 @@ export default function AdminBrandsPage() {
   const fetchBrands = async () => {
     setIsLoading(true);
     try {
-      const res = await brandApi.getAll({ size: 100 });
+      const res = await brandApi.getAll({ size: 100, sortBy: "id", sortDir: "desc" });
       setBrands(res.content || []);
     } catch (err) {
       console.error(err);

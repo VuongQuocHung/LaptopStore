@@ -1,12 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
 import { type ApiError } from "@/lib/api";
 import { authApi } from "@/lib/api-endpoints";
 
 export default function UserRegisterPage() {
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -33,9 +31,11 @@ export default function UserRegisterPage() {
     setIsLoading(true);
     authApi.register({ fullName, email, phone, password })
       .then((res) => {
-        // Đổi từ redirect sang hiện thông báo
-        setSuccess(res.message || "Đăng ký thành công! Vui lòng kiểm tra email để xác nhận tài khoản.");
-        router.push('/user/login');
+        setSuccess(
+          res.message ||
+          "Đăng ký thành công! Hãy bấm link xác nhận trong email đăng ký."
+        );
+        form.reset();
       })
       .catch((e: ApiError) => {
         setError(e?.message || "Đăng ký thất bại");
@@ -136,7 +136,12 @@ export default function UserRegisterPage() {
                 <p className="text-[12px] text-red-600 font-[600]">{error}</p>
               ) : null}
               {success ? (
-                <p className="text-[12px] text-green-700 font-[600]">{success}</p>
+                <div className="rounded-[8px] border border-green-200 bg-green-50 px-[12px] py-[10px]">
+                  <p className="text-[12px] text-green-700 font-[600]">{success}</p>
+                  <p className="text-[12px] text-green-700 mt-[4px]">
+                    Sau khi đã xác nhận email hoặc được admin bật enabled, bạn có thể đăng nhập.
+                  </p>
+                </div>
               ) : null}
 
               <button

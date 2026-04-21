@@ -33,9 +33,9 @@ export default function AdminDashboard() {
       setIsLoading(true);
       try {
         const [ordersRes, productsRes, usersRes] = await Promise.all([
-          orderApi.getAll({ size: 100, page: 0 }),
-          productApi.getAll({ size: 1 }),
-          userApi.getAll({ size: 5, page: 0 })
+          orderApi.getAll({ size: 100, page: 0, sortBy: "id", sortDir: "desc" }),
+          productApi.getAll({ size: 1, sortBy: "id", sortDir: "desc" }),
+          userApi.getAll({ size: 5, page: 0, sortBy: "id", sortDir: "desc" })
         ]);
 
         const allOrders = ordersRes.content || [];

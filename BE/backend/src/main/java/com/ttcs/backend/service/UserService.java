@@ -60,6 +60,10 @@ public class UserService {
     }
 
     public User createUser(User user) {
+        if (user.getPassword() == null || user.getPassword().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mật khẩu không được để trống");
+        }
+
         String normalizedEmail = user.getEmail().trim().toLowerCase(Locale.ROOT);
         if (userRepository.existsByEmail(normalizedEmail)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email nay da duoc su dung");

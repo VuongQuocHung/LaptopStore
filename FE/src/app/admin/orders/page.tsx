@@ -35,7 +35,7 @@ export default function AdminOrdersPage() {
   const fetchOrders = async () => {
     try {
       setIsLoading(true);
-      const res = await orderApi.getAll({ size: 50, sortBy: "id", sortDir: "desc" });
+      const res = await orderApi.getAll({ size: 50 });
       setOrders(res.content || []);
     } catch (err: unknown) {
       const apiError = err as ApiError;

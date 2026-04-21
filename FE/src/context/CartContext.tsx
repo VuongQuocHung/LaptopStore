@@ -1,8 +1,7 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useMemo } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 import { Product } from "@/types/api";
-import { useAuth } from "@/context/AuthContext";
 
 export interface CartItem {
   id: number;
@@ -23,35 +22,25 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
   const [cart, setCart] = useState<CartItem[]>([]); // ds sản phẩm trong giỏ hàng
-  const [loadedCartKey, setLoadedCartKey] = useState<string | null>(null);
-
-  const cartStorageKey = useMemo(() => {
-    const normalizedEmail = user?.email?.trim().toLowerCase();
-    return normalizedEmail ? `cart:${normalizedEmail}` : "cart:guest";
-  }, [user?.email]);
+  const [hasLoadedCart, setHasLoadedCart] = useState(false);
 
   useEffect(() => {
-    const savedCart = localStorage.getItem(cartStorageKey);
+    const savedCart = localStorage.getItem("cart"); // Lấy giỏ hàng đã lưu trong localStorage
     if (savedCart) {
       try {
         setCart(JSON.parse(savedCart));
       } catch {
-        localStorage.removeItem(cartStorageKey);
-        setCart([]);
+        localStorage.removeItem("cart");
       }
-    } else {
-      setCart([]);
     }
-
-    setLoadedCartKey(cartStorageKey);
-  }, [cartStorageKey]);
+    setHasLoadedCart(true);
+  }, []);
 
   useEffect(() => {
-    if (loadedCartKey !== cartStorageKey) return;
-    localStorage.setItem(cartStorageKey, JSON.stringify(cart));
-  }, [cart, loadedCartKey, cartStorageKey]);
+    if (!hasLoadedCart) return;
+    localStorage.setItem("cart", JSON.stringify(cart));
+  }, [cart, hasLoadedCart]);
 
   const addToCart = (product: Product, quantity = 1) => {
     if (!product.id) return;

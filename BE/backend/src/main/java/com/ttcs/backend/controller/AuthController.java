@@ -7,15 +7,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
-
-import java.net.URI;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -24,18 +20,6 @@ import java.net.URI;
 public class AuthController {
 
     private final AuthService authService;
-
-    @Value("${front-end.url}")
-    private String frontendUrl;
-
-    private String normalizeFrontendUrl() {
-        if (frontendUrl == null || frontendUrl.isBlank()) {
-            return "http://localhost:3000";
-        }
-        return frontendUrl.endsWith("/")
-                ? frontendUrl.substring(0, frontendUrl.length() - 1)
-                : frontendUrl;
-    }
 
     @PostMapping("/register")
     @Operation(summary = "Đăng ký tài khoản", description = "Tạo một tài khoản người dùng mới cho Laptop Shop")
@@ -97,17 +81,10 @@ public class AuthController {
     }
     @GetMapping("/verify-email")
     @Operation(summary = "Xác nhận email", description = "Xác thực tài khoản qua token trong email")
-    @ApiResponse(responseCode = "302", description = "Xác thực thành công và chuyển hướng về trang đăng nhập")
+    @ApiResponse(responseCode = "200", description = "Xác thực thành công")
     @ApiResponse(responseCode = "400", description = "Token không hợp lệ hoặc đã hết hạn")
-    public ResponseEntity<Void> verifyEmail(@RequestParam String token) {
-        String baseUrl = normalizeFrontendUrl();
-        try {
-            authService.verifyEmail(token);
-            URI location = URI.create(baseUrl + "/user/login?verified=1");
-            return ResponseEntity.status(HttpStatus.FOUND).location(location).build();
-        } catch (ResponseStatusException ex) {
-            URI location = URI.create(baseUrl + "/user/login?verified=0");
-            return ResponseEntity.status(HttpStatus.FOUND).location(location).build();
-        }
+    public ResponseEntity<String> verifyEmail(@RequestParam String token) {
+        authService.verifyEmail(token);
+        return ResponseEntity.ok("Xác thực email thành công! Bạn có thể đăng nhập.");
     }
 }

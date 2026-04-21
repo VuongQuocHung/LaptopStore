@@ -4,33 +4,29 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
-import { orderApi } from "@/lib/api-endpoints";
+import { orderApi, voucherApi, ApplyVoucherResult } from "@/lib/api-endpoints";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import {
-  CreditCard,
-  MapPin,
-  Phone,
-  User,
-  Mail,
-  FileText,
-  ChevronRight,
-  CheckCircle2,
-  ArrowLeft,
-  ShoppingBag,
-  ShieldCheck,
-  AlertCircle
+  CreditCard, MapPin, Phone, User, Mail, FileText,
+  ChevronRight, CheckCircle2, ArrowLeft, ShoppingBag,
+  ShieldCheck, AlertCircle, Tag, X, Check
 } from "lucide-react";
 import Link from "next/link";
 import { ApiError } from "@/lib/api";
 import { resolveImageUrl } from "@/lib/image";
 
 function CheckoutForm() {
-  const router = useRouter();
   const { cart, totalPrice, clearCart, totalItems } = useCart();
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Voucher state
+  const [voucherCode, setVoucherCode] = useState("");
+  const [voucherResult, setVoucherResult] = useState<ApplyVoucherResult | null>(null);
+  const [voucherError, setVoucherError] = useState("");
+  const [voucherLoading, setVoucherLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     fullName: user?.fullName || "",
@@ -40,19 +36,39 @@ function CheckoutForm() {
     note: "",
   });
 
+  const finalPrice = voucherResult ? voucherResult.finalAmount : totalPrice;
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (cart.length === 0) return;
+  const handleApplyVoucher = async () => {
+    if (!voucherCode.trim()) return;
+    setVoucherLoading(true);
+    setVoucherError("");
+    setVoucherResult(null);
+    try {
+      const res = await voucherApi.applyVoucher(voucherCode.trim(), totalPrice);
+      setVoucherResult(res);
+    } catch (err: any) {
+      setVoucherError(err?.message || "Mã voucher không hợp lệ");
+    } finally {
+      setVoucherLoading(false);
+    }
+  };
 
+  const handleRemoveVoucher = () => {
+    setVoucherResult(null);
+    setVoucherCode("");
+    setVoucherError("");
+  };
+
+  const handleSubmit = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (cart.length === 0) return;
     setIsLoading(true);
     setError(null);
 
-    // Đổi payload orderDetails sang dạng backend cần: product: { id }, quantity, unitPrice.
-    // fix tạo đơn lỗi do sai cấu trúc dữ liệu
     const orderDetails = cart.map((item) => ({
       product: { id: item.id },
       quantity: item.quantity,
@@ -63,8 +79,9 @@ function CheckoutForm() {
       await orderApi.create({
         phoneNumber: formData.phone,
         shippingAddress: formData.address,
-        totalAmount: totalPrice,
+        totalAmount: finalPrice,
         orderDetails,
+        ...(voucherResult ? { voucher: { id: voucherResult.voucherId } } : {}),
       });
       setIsSuccess(true);
       clearCart();
@@ -87,16 +104,10 @@ function CheckoutForm() {
           Cảm ơn bạn đã tin tưởng VPH STORE. Đơn hàng của bạn đang được xử lý và sẽ sớm được giao tới bạn.
         </p>
         <div className="flex gap-4">
-          <Link
-            href="/user/orders"
-            className="bg-slate-900 text-white px-8 py-4 rounded-2xl font-black shadow-xl shadow-slate-200 hover:bg-slate-800 transition"
-          >
+          <Link href="/user/orders" className="bg-slate-900 text-white px-8 py-4 rounded-2xl font-black shadow-xl shadow-slate-200 hover:bg-slate-800 transition">
             THEO DÕI ĐƠN HÀNG
           </Link>
-          <Link
-            href="/"
-            className="bg-white border-2 border-slate-200 text-slate-900 px-8 py-4 rounded-2xl font-black hover:bg-slate-50 transition"
-          >
+          <Link href="/" className="bg-white border-2 border-slate-200 text-slate-900 px-8 py-4 rounded-2xl font-black hover:bg-slate-50 transition">
             QUAY LẠI TRANG CHỦ
           </Link>
         </div>
@@ -139,30 +150,18 @@ function CheckoutForm() {
                     <label htmlFor="fullName" className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Họ và tên</label>
                     <div className="relative">
                       <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                      <input
-                        id="fullName"
-                        type="text"
-                        required
+                      <input id="fullName" type="text" required
                         className="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-100 outline-none transition font-medium"
-                        placeholder="Nguyễn Văn A"
-                        value={formData.fullName}
-                        onChange={handleChange}
-                      />
+                        placeholder="Nguyễn Văn A" value={formData.fullName} onChange={handleChange} />
                     </div>
                   </div>
                   <div className="space-y-1.5">
                     <label htmlFor="phone" className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Số điện thoại</label>
                     <div className="relative">
                       <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                      <input
-                        id="phone"
-                        type="tel"
-                        required
+                      <input id="phone" type="tel" required
                         className="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-100 outline-none transition font-medium"
-                        placeholder="09xx xxx xxx"
-                        value={formData.phone}
-                        onChange={handleChange}
-                      />
+                        placeholder="09xx xxx xxx" value={formData.phone} onChange={handleChange} />
                     </div>
                   </div>
                 </div>
@@ -171,15 +170,9 @@ function CheckoutForm() {
                   <label htmlFor="email" className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Email nhận thông báo</label>
                   <div className="relative">
                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <input
-                      id="email"
-                      type="email"
-                      required
+                    <input id="email" type="email" required
                       className="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-100 outline-none transition font-medium"
-                      placeholder="example@email.com"
-                      value={formData.email}
-                      onChange={handleChange}
-                    />
+                      placeholder="example@email.com" value={formData.email} onChange={handleChange} />
                   </div>
                 </div>
 
@@ -187,15 +180,9 @@ function CheckoutForm() {
                   <label htmlFor="address" className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Địa chỉ nhận hàng</label>
                   <div className="relative">
                     <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <input
-                      id="address"
-                      type="text"
-                      required
+                    <input id="address" type="text" required
                       className="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-100 outline-none transition font-medium"
-                      placeholder="Số nhà, tên đường, phường/xã..."
-                      value={formData.address}
-                      onChange={handleChange}
-                    />
+                      placeholder="Số nhà, tên đường, phường/xã..." value={formData.address} onChange={handleChange} />
                   </div>
                 </div>
 
@@ -203,14 +190,9 @@ function CheckoutForm() {
                   <label htmlFor="note" className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Ghi chú thêm (không bắt buộc)</label>
                   <div className="relative">
                     <FileText className="absolute left-4 top-4 w-4 h-4 text-slate-400" />
-                    <textarea
-                      id="note"
-                      rows={4}
+                    <textarea id="note" rows={4}
                       className="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-100 outline-none transition font-medium resize-none"
-                      placeholder="Chỉ dẫn giao hàng, thời gian nhận hàng..."
-                      value={formData.note}
-                      onChange={handleChange}
-                    ></textarea>
+                      placeholder="Chỉ dẫn giao hàng, thời gian nhận hàng..." value={formData.note} onChange={handleChange} />
                   </div>
                 </div>
 
@@ -230,9 +212,6 @@ function CheckoutForm() {
                     <div className="w-4 h-4 rounded-full border-4 border-blue-600" />
                     <span className="font-bold text-slate-900 text-sm">Thanh toán khi nhận hàng (COD)</span>
                   </div>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest text-center">
-                    Mọi thông tin đều được bảo mật tuyệt đối
-                  </p>
                 </div>
               </form>
             </div>
@@ -254,25 +233,68 @@ function CheckoutForm() {
                       <p className="text-xs text-slate-400">Số lượng: {item.quantity}</p>
                     </div>
                     <p className="text-sm font-black text-slate-900">
-                      {new Intl.NumberFormat("vi-VN", {
-                        style: "currency",
-                        currency: "VND",
-                      }).format((item.product.price || 0) * item.quantity)}
+                      {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format((item.product.price || 0) * item.quantity)}
                     </p>
                   </div>
                 ))}
               </div>
 
-              <div className="space-y-4 py-8 border-t border-slate-100">
+              {/* VOUCHER */}
+              <div className="py-6 border-t border-slate-100">
+                <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                  <Tag className="w-3.5 h-3.5" />
+                  Mã giảm giá
+                </p>
+                {voucherResult ? (
+                  <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-2xl px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-green-600" />
+                      <span className="font-mono font-bold text-green-700 text-sm">{voucherResult.code}</span>
+                      <span className="text-green-600 text-sm font-bold">-{voucherResult.discountPct}%</span>
+                    </div>
+                    <button onClick={handleRemoveVoucher} className="p-1 hover:bg-green-100 rounded-lg transition">
+                      <X className="w-4 h-4 text-green-600" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Nhập mã voucher..."
+                      value={voucherCode}
+                      onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
+                      onKeyDown={(e) => e.key === "Enter" && handleApplyVoucher()}
+                      className="flex-1 border border-slate-200 rounded-2xl px-4 py-3 text-sm font-mono font-bold outline-none focus:border-blue-400 uppercase"
+                    />
+                    <button
+                      onClick={handleApplyVoucher}
+                      disabled={voucherLoading || !voucherCode.trim()}
+                      className="bg-slate-900 text-white px-4 py-3 rounded-2xl text-sm font-black disabled:opacity-40 hover:bg-blue-600 transition"
+                    >
+                      {voucherLoading ? "..." : "Áp dụng"}
+                    </button>
+                  </div>
+                )}
+                {voucherError && (
+                  <p className="text-red-500 text-xs font-bold mt-2 pl-1">{voucherError}</p>
+                )}
+              </div>
+
+              <div className="space-y-4 py-6 border-t border-slate-100">
                 <div className="flex justify-between text-slate-500 text-sm">
                   <span>Tạm tính ({totalItems} sản phẩm):</span>
                   <span className="font-bold text-slate-900">
-                    {new Intl.NumberFormat("vi-VN", {
-                      style: "currency",
-                      currency: "VND",
-                    }).format(totalPrice)}
+                    {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(totalPrice)}
                   </span>
                 </div>
+                {voucherResult && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-green-600 font-bold">Giảm giá voucher:</span>
+                    <span className="text-green-600 font-bold">
+                      -{new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(voucherResult.discountAmount)}
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between text-slate-500 text-sm">
                   <span>Phí giao hàng:</span>
                   <span className="text-green-600 font-bold uppercase tracking-widest text-[10px]">Miễn phí</span>
@@ -282,10 +304,7 @@ function CheckoutForm() {
               <div className="pt-6 border-t border-slate-100 flex justify-between items-end mb-10">
                 <span className="text-slate-900 font-black">TỔNG CỘNG:</span>
                 <span className="text-4xl font-black text-blue-600 tracking-tighter">
-                  {new Intl.NumberFormat("vi-VN", {
-                    style: "currency",
-                    currency: "VND",
-                  }).format(totalPrice)}
+                  {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(finalPrice)}
                 </span>
               </div>
 

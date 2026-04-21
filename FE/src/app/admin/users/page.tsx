@@ -112,7 +112,9 @@ export default function AdminUsersPage() {
       const res = await userApi.getAll({ 
         page, 
         size: 10, 
-        fullName: searchTerm || undefined 
+        fullName: searchTerm || undefined,
+        sortBy: "id",
+        sortDir: "desc"
       });
       setUsers(res.content || []);
       setTotalPages(res.totalPages || 0);

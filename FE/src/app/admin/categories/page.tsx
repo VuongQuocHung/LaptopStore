@@ -26,7 +26,7 @@ export default function AdminCategoriesPage() {
   const fetchCategories = async () => {
     setIsLoading(true);
     try {
-      const res = await categoryApi.getAll({ size: 100 });
+      const res = await categoryApi.getAll({ size: 100, sortBy: "id", sortDir: "desc" });
       setCategories(res.content || []);
     } catch (err) {
       console.error(err);

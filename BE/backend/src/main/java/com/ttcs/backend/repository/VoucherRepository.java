@@ -1,6 +1,7 @@
 package com.ttcs.backend.repository;
 
 import com.ttcs.backend.entity.Voucher;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -18,13 +19,17 @@ public interface VoucherRepository extends JpaRepository<Voucher, Long> {
 
     Optional<Voucher> findByCode(String code);
 
+    @EntityGraph(attributePaths = {"user", "tier"})
     List<Voucher> findByUserIdOrderByIssuedAtDesc(Long userId);
 
     boolean existsByUserIdAndTierIdAndStatus(Long userId, Long tierId, String status);
+
+    boolean existsByUserIdAndTierId(Long userId, Long tierId);
 
     @Modifying
     @Query("UPDATE Voucher v SET v.status = 'EXPIRED' WHERE v.expiresAt < :now AND v.status = 'ACTIVE'")
     int expireByExpiresAtBefore(@Param("now") LocalDateTime now);
 
+    @EntityGraph(attributePaths = {"user", "tier"})
     Page<Voucher> findByStatusContainingIgnoreCase(String status, Pageable pageable);
 }

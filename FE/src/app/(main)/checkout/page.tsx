@@ -1,10 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useEffect, useState } from "react";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
-import { orderApi, voucherApi, ApplyVoucherResult } from "@/lib/api-endpoints";
+import { orderApi, voucherApi, ApplyVoucherResult, Voucher } from "@/lib/api-endpoints";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import {
   CreditCard, MapPin, Phone, User, Mail, FileText,
@@ -27,6 +26,8 @@ function CheckoutForm() {
   const [voucherResult, setVoucherResult] = useState<ApplyVoucherResult | null>(null);
   const [voucherError, setVoucherError] = useState("");
   const [voucherLoading, setVoucherLoading] = useState(false);
+  const [myVouchers, setMyVouchers] = useState<Voucher[]>([]);
+  const [myVouchersLoading, setMyVouchersLoading] = useState(true);
 
   const [formData, setFormData] = useState({
     fullName: user?.fullName || "",
@@ -38,17 +39,51 @@ function CheckoutForm() {
 
   const finalPrice = voucherResult ? voucherResult.finalAmount : totalPrice;
 
+  useEffect(() => {
+    let ignore = false;
+
+    const fetchMyVouchers = async () => {
+      setMyVouchersLoading(true);
+      try {
+        const vouchers = await voucherApi.getMyVouchers();
+        if (!ignore) {
+          setMyVouchers(vouchers || []);
+        }
+      } catch {
+        if (!ignore) {
+          setMyVouchers([]);
+        }
+      } finally {
+        if (!ignore) {
+          setMyVouchersLoading(false);
+        }
+      }
+    };
+
+    fetchMyVouchers();
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  const availableVouchers = myVouchers.filter(
+    (v) => v.status === "ACTIVE" && new Date(v.expiresAt).getTime() > Date.now()
+  );
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
   };
 
-  const handleApplyVoucher = async () => {
-    if (!voucherCode.trim()) return;
+  const handleApplyVoucher = async (selectedCode?: string) => {
+    const code = (selectedCode ?? voucherCode).trim().toUpperCase();
+    if (!code) return;
+
+    setVoucherCode(code);
     setVoucherLoading(true);
     setVoucherError("");
     setVoucherResult(null);
     try {
-      const res = await voucherApi.applyVoucher(voucherCode.trim(), totalPrice);
+      const res = await voucherApi.applyVoucher(code, totalPrice);
       setVoucherResult(res);
     } catch (err: any) {
       setVoucherError(err?.message || "Mã voucher không hợp lệ");
@@ -257,22 +292,54 @@ function CheckoutForm() {
                     </button>
                   </div>
                 ) : (
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="Nhập mã voucher..."
-                      value={voucherCode}
-                      onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
-                      onKeyDown={(e) => e.key === "Enter" && handleApplyVoucher()}
-                      className="flex-1 border border-slate-200 rounded-2xl px-4 py-3 text-sm font-mono font-bold outline-none focus:border-blue-400 uppercase"
-                    />
-                    <button
-                      onClick={handleApplyVoucher}
-                      disabled={voucherLoading || !voucherCode.trim()}
-                      className="bg-slate-900 text-white px-4 py-3 rounded-2xl text-sm font-black disabled:opacity-40 hover:bg-blue-600 transition"
-                    >
-                      {voucherLoading ? "..." : "Áp dụng"}
-                    </button>
+                  <div className="space-y-3">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="Nhập mã voucher..."
+                        value={voucherCode}
+                        onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
+                        onKeyDown={(e) => e.key === "Enter" && handleApplyVoucher()}
+                        className="flex-1 border border-slate-200 rounded-2xl px-4 py-3 text-sm font-mono font-bold outline-none focus:border-blue-400 uppercase"
+                      />
+                      <button
+                        onClick={() => handleApplyVoucher()}
+                        disabled={voucherLoading || !voucherCode.trim()}
+                        className="bg-slate-900 text-white px-4 py-3 rounded-2xl text-sm font-black disabled:opacity-40 hover:bg-blue-600 transition"
+                      >
+                        {voucherLoading ? "..." : "Áp dụng"}
+                      </button>
+                    </div>
+
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                      <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">
+                        Voucher khả dụng của bạn
+                      </p>
+                      {myVouchersLoading ? (
+                        <p className="text-xs text-slate-400 font-medium">Đang tải voucher...</p>
+                      ) : availableVouchers.length === 0 ? (
+                        <p className="text-xs text-slate-400 font-medium">Hiện chưa có voucher còn hiệu lực.</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {availableVouchers.map((v) => (
+                            <button
+                              key={v.id}
+                              onClick={() => handleApplyVoucher(v.code)}
+                              disabled={voucherLoading}
+                              className="w-full flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2 text-left hover:border-blue-300 hover:bg-blue-50 transition disabled:opacity-50"
+                            >
+                              <div>
+                                <p className="font-mono text-xs font-bold text-slate-700">{v.code}</p>
+                                <p className="text-[11px] text-slate-500 font-medium">
+                                  HSD: {new Date(v.expiresAt).toLocaleDateString("vi-VN")}
+                                </p>
+                              </div>
+                              <span className="text-xs font-black text-blue-600">-{v.discountPct}%</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
                 {voucherError && (

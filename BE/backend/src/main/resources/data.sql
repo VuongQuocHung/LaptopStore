@@ -196,10 +196,10 @@ WHERE p.name = 'MSI Creator M16'
   );
 
 INSERT INTO voucher_tiers (name, min_spend, discount_pct, validity_days) VALUES
-('SILVER',    5000000,  5,  90),
-('GOLD',     15000000, 10,  90),
-('PLATINUM', 30000000, 15,  90),
-('DIAMOND',  60000000, 20, 120)
+('SILVER',   50000000, 20,  90),
+('GOLD',     75000000, 30,  90),
+('PLATINUM',100000000, 40, 120),
+('DIAMOND', 150000000, 45, 120)
 
 ON DUPLICATE KEY UPDATE
     min_spend = VALUES(min_spend),

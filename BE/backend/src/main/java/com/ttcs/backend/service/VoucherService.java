@@ -28,6 +28,7 @@ public class VoucherService {
     private final UserRepository userRepo;
     private final OrderRepository orderRepo;
 
+    @Transactional(readOnly = true)
     public List<VoucherResponse> getMyVouchers(Long userId) {
         return voucherRepo.findByUserIdOrderByIssuedAtDesc(userId)
             .stream()
@@ -69,6 +70,7 @@ public class VoucherService {
         voucherRepo.save(v);
     }
 
+    @Transactional(readOnly = true)
     public Page<VoucherResponse> getAllVouchers(String status, Pageable pageable) {
         return voucherRepo.findByStatusContainingIgnoreCase(status, pageable)
             .map(VoucherResponse::from);

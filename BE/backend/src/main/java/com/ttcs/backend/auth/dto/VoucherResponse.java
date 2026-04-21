@@ -12,6 +12,9 @@ public class VoucherResponse {
     private String code;
     private String tierName;
     private Integer discountPct;
+    private Long userId;
+    private String userEmail;
+    private String userFullName;
     private LocalDateTime issuedAt;
     private LocalDateTime expiresAt;
     private String status;
@@ -22,6 +25,9 @@ public class VoucherResponse {
             .code(v.getCode())
             .tierName(v.getTier().getName())
             .discountPct(v.getDiscountPct())
+            .userId(v.getUser() != null ? v.getUser().getId() : null)
+            .userEmail(v.getUser() != null ? v.getUser().getEmail() : null)
+            .userFullName(v.getUser() != null ? v.getUser().getFullName() : null)
             .issuedAt(v.getIssuedAt())
             .expiresAt(v.getExpiresAt())
             .status(v.getStatus())

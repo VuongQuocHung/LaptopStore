@@ -32,31 +32,34 @@ public class VoucherTierService {
         Number totalSpendRaw = orderRepo.sumPaidAmountByUserId(userId);
         Long totalSpend = totalSpendRaw != null ? totalSpendRaw.longValue() : 0L;
 
-        VoucherTier tier = tierRepo.findHighestEligibleTier(totalSpend).orElse(null);
-        if (tier == null) return;
+        List<VoucherTier> eligibleTiers = tierRepo.findByMinSpendLessThanEqualOrderByMinSpendAsc(totalSpend);
+        if (eligibleTiers.isEmpty()) return;
 
-        boolean alreadyHasActive = voucherRepo
-            .existsByUserIdAndTierIdAndStatus(userId, tier.getId(), "ACTIVE");
-        if (alreadyHasActive) return;
+        for (VoucherTier tier : eligibleTiers) {
+            boolean alreadyGrantedForTier = voucherRepo.existsByUserIdAndTierId(userId, tier.getId());
+            if (alreadyGrantedForTier) {
+                continue;
+            }
 
-        String prefix = tier.getName().substring(0, Math.min(4, tier.getName().length())).toUpperCase();
-        String suffix = UUID.randomUUID().toString().substring(0, 4).toUpperCase();
-        String code = "VPH-" + prefix + "-" + suffix;
+            String prefix = tier.getName().substring(0, Math.min(4, tier.getName().length())).toUpperCase();
+            String suffix = UUID.randomUUID().toString().substring(0, 4).toUpperCase();
+            String code = "VPH-" + prefix + "-" + suffix;
 
-        Voucher voucher = Voucher.builder()
-            .code(code)
-            .user(userRepo.getReferenceById(userId))
-            .tier(tier)
-            .discountPct(tier.getDiscountPct())
-            .issuedAt(LocalDateTime.now())
-            .expiresAt(LocalDateTime.now().plusDays(tier.getValidityDays()))
-            .status("ACTIVE")
-            .build();
+            Voucher voucher = Voucher.builder()
+                .code(code)
+                .user(userRepo.getReferenceById(userId))
+                .tier(tier)
+                .discountPct(tier.getDiscountPct())
+                .issuedAt(LocalDateTime.now())
+                .expiresAt(LocalDateTime.now().plusDays(tier.getValidityDays()))
+                .status("ACTIVE")
+                .build();
 
-        voucherRepo.save(voucher);
+            voucherRepo.save(voucher);
 
-        // Tạm log, sau này thêm method sendVoucherGranted vào MailService
-        log.info("Granted voucher {} to user {}", code, userId);
+            // Tạm log, sau này thêm method sendVoucherGranted vào MailService
+            log.info("Granted voucher {} to user {} for tier {}", code, userId, tier.getName());
+        }
     }
 
     public List<VoucherTier> getAllTiers() {

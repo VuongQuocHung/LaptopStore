@@ -140,6 +140,9 @@ export interface Voucher {
   code: string;
   tierName: string;
   discountPct: number;
+  userId?: number | null;
+  userEmail?: string | null;
+  userFullName?: string | null;
   issuedAt: string;
   expiresAt: string;
   status: "ACTIVE" | "USED" | "EXPIRED";

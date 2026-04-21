@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { voucherApi, Voucher, VoucherTier } from "@/lib/api-endpoints";
 import {
   Tag, Search, Star, ChevronLeft, ChevronRight, X, Plus, Trash2,
@@ -104,12 +104,33 @@ export default function AdminVouchersPage() {
     }
   };
 
-  const filtered = vouchers.filter(v =>
-    v.code.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filtered = vouchers.filter((v) => {
+    const keyword = searchTerm.toLowerCase();
+    return (
+      v.code.toLowerCase().includes(keyword)
+      || (v.userFullName || "").toLowerCase().includes(keyword)
+      || (v.userEmail || "").toLowerCase().includes(keyword)
+    );
+  });
 
   const formatMoney = (amount: number) =>
     new Intl.NumberFormat("vi-VN").format(amount) + "₫";
+
+  const uniqueTiers = useMemo(() => {
+    const byName = new Map<string, VoucherTier>();
+
+    for (const tier of tiers) {
+      const key = (tier.name || "").toUpperCase();
+      const current = byName.get(key);
+
+      // Keep the most up-to-date tier config for each name.
+      if (!current || tier.minSpend > current.minSpend || (tier.minSpend === current.minSpend && tier.id > current.id)) {
+        byName.set(key, { ...tier, name: key });
+      }
+    }
+
+    return Array.from(byName.values()).sort((a, b) => a.minSpend - b.minSpend);
+  }, [tiers]);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -163,7 +184,7 @@ export default function AdminVouchersPage() {
                   className="w-full border border-slate-200 rounded-2xl px-4 py-3 text-sm font-medium outline-none focus:border-blue-400"
                 >
                   <option value="">Chọn hạng...</option>
-                  {tiers.map(t => (
+                  {uniqueTiers.map(t => (
                     <option key={t.id} value={t.id}>
                       {TIER_STYLES[t.name]?.label || t.name} — giảm {t.discountPct}%
                     </option>
@@ -189,7 +210,7 @@ export default function AdminVouchersPage() {
 
       {/* Tier cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {tiers.length === 0
+        {uniqueTiers.length === 0
           ? Array(4).fill(0).map((_, i) => (
               <div key={i} className="bg-white rounded-3xl border border-slate-200 p-5 animate-pulse">
                 <div className="h-4 bg-slate-100 rounded w-16 mb-3" />
@@ -197,7 +218,7 @@ export default function AdminVouchersPage() {
                 <div className="h-3 bg-slate-100 rounded w-32" />
               </div>
             ))
-          : tiers.map((tier) => {
+          : uniqueTiers.map((tier) => {
               const s = TIER_STYLES[tier.name] || TIER_STYLES.SILVER;
               return (
                 <div key={tier.id} className="bg-white rounded-3xl border border-slate-200 p-5 shadow-sm">
@@ -225,7 +246,7 @@ export default function AdminVouchersPage() {
           <Search className="ml-4 w-4 h-4 text-slate-400" />
           <input
             type="text"
-            placeholder="Tìm theo mã voucher..."
+            placeholder="Tìm theo mã, họ tên hoặc email..."
             className="flex-1 px-3 py-3 outline-none font-medium text-slate-600 bg-transparent text-sm"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -250,6 +271,7 @@ export default function AdminVouchersPage() {
             <thead>
               <tr className="bg-slate-50 border-b border-slate-100">
                 <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Mã Voucher</th>
+                <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Người dùng</th>
                 <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Hạng</th>
                 <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Giảm giá</th>
                 <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Ngày cấp</th>
@@ -263,6 +285,7 @@ export default function AdminVouchersPage() {
                 Array(5).fill(0).map((_, i) => (
                   <tr key={i} className="animate-pulse">
                     <td className="px-8 py-6"><div className="h-8 bg-slate-100 rounded-xl w-36" /></td>
+                    <td className="px-6 py-6"><div className="h-8 bg-slate-100 rounded-xl w-52" /></td>
                     <td className="px-6 py-6"><div className="h-6 bg-slate-100 rounded-lg w-20" /></td>
                     <td className="px-6 py-6"><div className="h-6 bg-slate-100 rounded-lg w-12" /></td>
                     <td className="px-6 py-6"><div className="h-6 bg-slate-100 rounded-lg w-24" /></td>
@@ -273,7 +296,7 @@ export default function AdminVouchersPage() {
                 ))
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-8 py-20 text-center">
+                  <td colSpan={8} className="px-8 py-20 text-center">
                     <Tag className="w-12 h-12 text-slate-200 mx-auto mb-4" />
                     <p className="text-slate-400 font-bold">Không có voucher nào</p>
                   </td>
@@ -288,6 +311,16 @@ export default function AdminVouchersPage() {
                         <span className="font-mono text-sm font-bold text-slate-700 bg-slate-100 px-3 py-1.5 rounded-xl">
                           {v.code}
                         </span>
+                      </td>
+                      <td className="px-6 py-5">
+                        <div className="min-w-0 max-w-[260px]">
+                          <p className="text-sm font-bold text-slate-800 truncate">
+                            {v.userFullName || "Chưa có tên"}
+                          </p>
+                          <p className="text-xs text-slate-500 truncate">
+                            {v.userEmail || "Không có email"}
+                          </p>
+                        </div>
                       </td>
                       <td className="px-6 py-5">
                         <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border ${tier.bg} ${tier.text} ${tier.border}`}>

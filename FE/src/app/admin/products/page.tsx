@@ -45,9 +45,7 @@ export default function AdminProductsPage() {
       const res = await productApi.getAll({ 
         page, 
         size: 10, 
-        name: searchTerm || undefined,
-        sortBy: "id",
-        sortDir: "desc"
+        name: searchTerm || undefined 
       });
       setProducts(res.content || []);
       setTotalPages(res.totalPages || 0);

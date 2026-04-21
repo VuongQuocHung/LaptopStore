@@ -29,6 +29,8 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
+    private final VoucherTierService voucherTierService;
+    private final VoucherService voucherService;
 
     public List<Order> getAllOrders() {
         return orderRepository.findAll();
@@ -68,22 +70,25 @@ public class OrderService {
     }
 
     public Order createOrder(Order order) {
-        // 1. Mặc định trạng thái là PENDING khi tạo mới
         order.setStatus(OrderStatus.PENDING);
 
-        // 2. Gán user hiện tại làm người tạo đơn
         User currentUser = SecurityUtils.getCurrentUserId()
                 .map(id -> userRepository.findById(id).orElse(null))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Vui lòng đăng nhập để đặt hàng"));
         
         order.setUser(currentUser);
 
-        // 3. Thiết lập quan hệ 2 chiều giữa Order và OrderDetai
         if (order.getOrderDetails() != null) {
             order.getOrderDetails().forEach(detail -> detail.setOrder(order));
         }
 
-        return orderRepository.save(order);
+        Order saved = orderRepository.save(order);
+
+        if (saved.getVoucher() != null) {
+            voucherService.markVoucherUsed(saved.getVoucher().getId(), saved.getId());
+        }
+
+        return saved;
     }
 
     @Transactional
@@ -111,7 +116,13 @@ public class OrderService {
         }
 
         order.setStatus(status);
-        return orderRepository.save(order);
+        Order saved = orderRepository.save(order);
+
+        if (status == OrderStatus.DELIVERED) {
+            voucherTierService.evaluateAndGrantVoucher(saved.getUser().getId());
+        }
+
+        return saved;
     }
 
     public void deleteOrder(Long id) {

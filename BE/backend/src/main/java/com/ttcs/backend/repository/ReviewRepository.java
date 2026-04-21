@@ -10,5 +10,4 @@ import java.util.List;
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, Long>, JpaSpecificationExecutor<Review> {
     List<Review> findByProductId(Long productId);
-    List<Review> findByUserId(Long userId);
 }

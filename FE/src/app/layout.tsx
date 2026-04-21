@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 import React from "react";
 import "./globals.css";
-
 
 import { Providers } from "@/components/Providers";
 
@@ -18,9 +18,11 @@ export default function RootLayout({
   return (
     <html lang="vi" suppressHydrationWarning>
       <body className="antialiased">
-        <Providers>
-          {children}
-        </Providers>
+        <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "dummy"}>
+          <Providers>
+            {children}
+          </Providers>
+        </GoogleOAuthProvider>
       </body>
     </html>
   );

@@ -1,5 +1,6 @@
 "use client";
 
+import { Ticket } from "lucide-react";
 import React from "react";
 import { AdminRoute } from "@/components/AdminRoute";
 import Link from "next/link";
@@ -21,6 +22,7 @@ const sidebarItems = [
   { name: "Đơn hàng", icon: <ShoppingBag className="w-5 h-5" />, href: "/admin/orders" },
   { name: "Người dùng", icon: <Users className="w-5 h-5" />, href: "/admin/users" },
   { name: "Danh mục", icon: <Tag className="w-5 h-5" />, href: "/admin/categories" },
+  { name: "Voucher", icon: <Ticket className="w-5 h-5" />, href: "/admin/vouchers" },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

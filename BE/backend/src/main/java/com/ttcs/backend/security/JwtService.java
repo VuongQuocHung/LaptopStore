@@ -25,6 +25,7 @@ public class JwtService {
     @Value("${jwt.expiration-ms}")
     private long jwtExpirationMs;
 
+    // Tạo token với email và role làm claim
     public String generateToken(String email, String role) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("role", role);

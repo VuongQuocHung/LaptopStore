@@ -39,7 +39,7 @@ export const Header = () => {
 
         {/* LOGO */}
         <Link href="/" className="text-[22px] font-bold flex items-center gap-[4px]">
-          <span className="tracking-tighter">VPH STORE</span>
+          <span className="tracking-tighter">LAPTOP STORE</span>
         </Link>
 
         {/* DANH MỤC */}

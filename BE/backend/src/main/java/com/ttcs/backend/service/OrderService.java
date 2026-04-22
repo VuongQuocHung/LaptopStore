@@ -92,21 +92,38 @@ public class OrderService {
 
         // Khi chuyển sang APPROVED, trừ tồn kho (chỉ khi trước đó chưa APPROVED)
         if (status == OrderStatus.APPROVED && order.getStatus() != OrderStatus.APPROVED) {
-            if (order.getOrderDetails() != null) {
-                System.out.println(order.getOrderDetails());
-                for (OrderDetail detail : order.getOrderDetails()) {
-                    Product product = detail.getProduct();
-                    if (product == null) continue;
+            if (order.getOrderDetails() == null || order.getOrderDetails().isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Đơn hàng không có sản phẩm để duyệt");
+            }
 
-                    Integer currentStock = product.getStock() == null ? 0 : product.getStock();
-                    if (currentStock < detail.getQuantity()) {
-                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                                "Không đủ tồn kho cho sản phẩm " + (product.getName() == null ? product.getId() : product.getName()));
-                    }
-
-                    product.setStock(currentStock - detail.getQuantity());
-                    productRepository.save(product);
+            for (OrderDetail detail : order.getOrderDetails()) {
+                Product detailProduct = detail.getProduct();
+                if (detailProduct == null || detailProduct.getId() == null) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                            "Chi tiết đơn hàng thiếu thông tin sản phẩm");
                 }
+
+                Integer quantity = detail.getQuantity();
+                if (quantity == null || quantity <= 0) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                            "Số lượng sản phẩm trong đơn hàng không hợp lệ");
+                }
+
+                Product lockedProduct = productRepository.findById(detailProduct.getId())
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                                "Sản phẩm không tồn tại với ID: " + detailProduct.getId()));
+
+                Integer currentStock = lockedProduct.getStock() == null ? 0 : lockedProduct.getStock();
+                if (currentStock < quantity) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                            "Không đủ tồn kho cho sản phẩm "
+                                    + (lockedProduct.getName() == null ? lockedProduct.getId() : lockedProduct.getName())
+                                    + ". Tồn hiện tại: " + currentStock + ", yêu cầu: " + quantity);
+                }
+
+                lockedProduct.setStock(currentStock - quantity);
+                productRepository.save(lockedProduct);
             }
         }
 

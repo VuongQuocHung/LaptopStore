@@ -46,11 +46,13 @@ export default function AdminOrdersPage() {
   };
 
   const handleUpdateStatus = async (id: number, status: string) => {
+    setError(null);
     try {
       await orderApi.updateStatus(id, status);
-      fetchOrders(); // Refresh
+      await fetchOrders(); // Refresh
     } catch (err: unknown) {
-      alert("Cập nhật trạng thái thất bại");
+      const apiError = err as ApiError;
+      setError(apiError?.message || "Cập nhật trạng thái thất bại");
     }
   };
 
@@ -91,10 +93,16 @@ export default function AdminOrdersPage() {
         </div>
         <div className="flex items-center gap-3">
            <div className="bg-white px-4 py-2 rounded-xl border border-slate-200 text-sm font-black text-slate-400 tracking-widest uppercase">
-             {filteredOrders.length} Đơn hàng
+             {filteredOrders.length} Đơn hàng 
            </div>
         </div>
       </div>
+
+      {error ? (
+        <div className="bg-red-50 text-red-700 border border-red-200 rounded-2xl px-4 py-3 text-sm font-semibold">
+          {error}
+        </div>
+      ) : null}
 
       {/* FILTERS */}
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between">

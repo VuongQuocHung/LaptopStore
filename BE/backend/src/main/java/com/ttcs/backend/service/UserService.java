@@ -35,6 +35,7 @@ public class UserService {
         return userRepository.findAll();
     }
 
+    // lấy danh sách người dùng với filter & pagination
     public Page<User> getFilteredUsers(String email, String fullName, String phone, Long roleId, Pageable pageable) {
         Specification<User> spec = Specification.where(UserSpecs.withFetchRole())
                 .and(UserSpecs.hasEmail(email))
@@ -64,20 +65,24 @@ public class UserService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mật khẩu không được để trống");
         }
 
+        // Chuẩn hóa email lowercase + chống trùng
         String normalizedEmail = user.getEmail().trim().toLowerCase(Locale.ROOT);
         if (userRepository.existsByEmail(normalizedEmail)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email nay da duoc su dung");
         }
 
+        // mã hóa mật khẩu trước khi lưu vào database
         user.setEmail(normalizedEmail);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+
+        // lưu user mới vào database
         return userRepository.save(user);
     }
 
     public User updateUser(Long id, User userDetails) {
         User user = getUserById(id);
 
-        // Authorization check (getUserById already does some, but we repeat for clarity or specialized update rules)
+        // Chỉ admin hoặc chính chủ mới được cập nhật thông tin người dùng
         if (!SecurityUtils.hasRole("ADMIN")) {
             Long currentUserId = SecurityUtils.getCurrentUserId()
                     .orElseThrow(() -> new AccessDeniedException("Vui lòng đăng nhập"));
@@ -98,6 +103,7 @@ public class UserService {
         user.setEnabled(userDetails.isEnabled());
         user.setRole(userDetails.getRole());
 
+        // Nếu có mật khẩu mới thì mã hóa, nếu không thì giữ nguyên mật khẩu cũ
         if (userDetails.getPassword() != null && !userDetails.getPassword().isBlank()) {
             user.setPassword(passwordEncoder.encode(userDetails.getPassword()));
         }
@@ -107,14 +113,14 @@ public class UserService {
 
     @Transactional
     public void deleteUser(Long id) {
-        User user = getUserById(id);
+        User user = getUserById(id); 
 
         Long currentUserId = SecurityUtils.getCurrentUserId().orElse(null);
         if (currentUserId != null && currentUserId.equals(id)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Khong the tu xoa tai khoan dang dang nhap");
         }
 
-        // Remove child records first to satisfy foreign key constraints.
+        // Xóa cascade các review và order liên quan đến user này trước khi xóa user
         List<Review> reviews = reviewRepository.findByUserId(id);
         if (!reviews.isEmpty()) {
             reviewRepository.deleteAll(reviews);

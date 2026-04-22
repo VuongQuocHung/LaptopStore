@@ -104,7 +104,13 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Tài khoản chưa được xác thực. Vui lòng kiểm tra email.");
         }
 
-        String token = jwtService.generateToken(user.getEmail(), user.getRole().getName());
+        String token = jwtService.generateToken(user.getEmail(), user.getRole().getName()); 
+        // Tạo một JWT (JSON Web Token) chứa:
+        // email của user
+        // role (quyền: ADMIN / CUSTOMER)
+        // Token này sẽ được gửi về cho frontend để:
+        // xác thực (authentication)
+        // phân quyền (authorization)
 
         return AuthResponse.builder()
                 .token(token)

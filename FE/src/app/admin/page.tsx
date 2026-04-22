@@ -38,14 +38,14 @@ export default function AdminDashboard() {
           userApi.getAll({ size: 5, page: 0, sortBy: "id", sortDir: "desc" })
         ]);
 
-        const allOrders = ordersRes.content || [];
+        const allOrders = ordersRes.content || []; // lấy tất cả đơn hàng để tính doanh thu
         const revenue = allOrders.reduce((acc, order) => acc + (order.totalAmount || 0), 0);
 
         setStats({
-          totalOrders: ordersRes.totalElements || 0,
-          totalProducts: productsRes.totalElements || 0,
-          totalUsers: usersRes.totalElements || 0,
-          totalRevenue: revenue
+          totalOrders: ordersRes.totalElements || 0, // tổng số đơn hàng
+          totalProducts: productsRes.totalElements || 0, // tổng số sản phẩm
+          totalUsers: usersRes.totalElements || 0, // tổng số người dùng
+          totalRevenue: revenue // tính tổng doanh thu từ tất cả đơn hàng, có thể điều chỉnh nếu muốn chỉ tính đơn hàng đã hoàn thành
         });
 
         setRecentOrders(allOrders.slice(0, 5));

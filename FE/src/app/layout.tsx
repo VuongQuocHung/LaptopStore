@@ -6,8 +6,8 @@ import "./globals.css";
 import { Providers } from "@/components/Providers";
 
 export const metadata: Metadata = {
-  title: "VPH STORE",
-  description: "Project TTCS: Xây dựng website bán laptop",
+  title: "LAPTOP STORE",
+  description: "Project LTW: Xây dựng website bán laptop",
 };
 
 export default function RootLayout({

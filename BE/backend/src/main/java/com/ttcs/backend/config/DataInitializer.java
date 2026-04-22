@@ -31,6 +31,7 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+        // Khởi tạo role ADMIN và CUSTOMER nếu chưa tồn tại
         Role adminRole = roleRepository.findByName("ADMIN")
                 .orElseGet(() -> roleRepository.save(Role.builder().name("ADMIN").build()));
 
@@ -38,8 +39,8 @@ public class DataInitializer implements CommandLineRunner {
                 .orElseGet(() -> roleRepository.save(Role.builder().name("CUSTOMER").build()));
 
         String normalizedAdminEmail = adminEmail.trim().toLowerCase(Locale.ROOT);
-        if (!userRepository.existsByEmail(normalizedAdminEmail)) {
-            User admin = User.builder()
+        if (!userRepository.existsByEmail(normalizedAdminEmail)) { // nếu chưa có admin nào thì tạo mới
+            User admin = User.builder() 
                     .email(normalizedAdminEmail)
                     .password(passwordEncoder.encode(adminPassword))
                     .fullName(adminFullName)

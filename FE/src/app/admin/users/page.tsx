@@ -43,20 +43,23 @@ const initialFormData: UserFormData = {
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // isLoading - đang tải dữ liệu
+  const [isSubmitting, setIsSubmitting] = useState(false); // isSubmitting - đang gửi form tạo/sửa user
   const [isDeleting, setIsDeleting] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(""); // searchTerm - từ khóa tìm kiếm user theo tên
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+  // phân trang
+
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false); // isModalOpen - trạng thái mở/đóng modal tạo/sửa user
   const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
-  const [formMode, setFormMode] = useState<FormMode>("create");
+  const [formMode, setFormMode] = useState<FormMode>("create"); // formMode - xác định modal đang ở chế độ tạo mới hay chỉnh sửa
   const [editingUserId, setEditingUserId] = useState<number | null>(null);
   const [formData, setFormData] = useState<UserFormData>(initialFormData);
 
+  // Hàm normalizeRoleLabel để hiển thị tên vai trò đẹp hơn trong bảng user, ví dụ: ADMIN -> Quản trị, CUSTOMER -> Khách hàng
   const normalizeRoleLabel = (roleName?: string) => {
     const role = (roleName || "").toUpperCase();
     if (role === "ADMIN" || role === "ROLE_ADMIN") return "Quản trị";
@@ -69,6 +72,7 @@ export default function AdminUsersPage() {
     return role === "ADMIN" || role === "ROLE_ADMIN";
   };
 
+  // Mở modal form để tạo mới user, reset formData về giá trị mặc định, set formMode về "create", xóa thông báo lỗi/thành công cũ
   const openCreateModal = () => {
     setFormMode("create");
     setEditingUserId(null);
@@ -101,14 +105,18 @@ export default function AdminUsersPage() {
     setIsSubmitting(false);
   };
 
+  // Hàm parseApiError để trích xuất thông báo lỗi từ đối tượng lỗi trả về khi gọi API, nếu không có thông báo lỗi cụ thể thì sử dụng thông báo lỗi mặc định truyền vào
   const parseApiError = (err: unknown, fallback: string) => {
     const apiErr = err as ApiError;
     return apiErr?.message || fallback;
   };
 
+
+  // Hàm fetchUsers để gọi API lấy danh sách user với các tham số phân trang, tìm kiếm và sắp xếp, cập nhật state users, totalPages và isLoading tương ứng, nếu có lỗi xảy ra thì cập nhật state error
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
+      // Gọi list users với paging + sort id desc + filter theo fullName
       const res = await userApi.getAll({ 
         page, 
         size: 10, 
@@ -125,9 +133,10 @@ export default function AdminUsersPage() {
     }
   };
 
+  // Lấy danh sách vai trò để hiển thị trong form tạo/sửa user và gửi roleId về backend khi tạo/sửa user
   const fetchRoles = async () => {
     try {
-      const res = await roleApi.getAll();
+      const res = await roleApi.getAll(); // Gọi API lấy tất cả vai trò
       setRoles(res || []);
     } catch (err) {
       setError(parseApiError(err, "Không thể tải danh sách vai trò"));
@@ -150,6 +159,7 @@ export default function AdminUsersPage() {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  // Xử lý submit form tạo/sửa user, gọi API tương ứng, hiển thị thông báo lỗi/thành công, đóng modal và refresh lại danh sách user sau khi thao tác thành công
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
@@ -205,7 +215,7 @@ export default function AdminUsersPage() {
 
     setIsSubmitting(true);
     try {
-      if (formMode === "create") {
+      if (formMode === "create") { // tạo mới user
         await userApi.create(payload);
         setSuccess("Đã thêm người dùng thành công");
       } else {

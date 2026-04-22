@@ -133,10 +133,6 @@ export default function AdminProductsPage() {
             }
         }
     }
-    // If not a file, it might be a text URL.
-    // We let the default behavior happen (it will be pasted into the input).
-    // But we need to update our state if the user pastes a URL.
-    // We'll handle this via the onChange of the input.
   };
 
   const handleDrop = async (e: React.DragEvent) => {
@@ -509,7 +505,7 @@ export default function AdminProductsPage() {
                       <input name="storage" defaultValue={editingProduct?.specification?.storage} className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl font-medium outline-none focus:border-blue-600 transition" />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-slate-700 ml-1">Card màn hình</label>
+                      <label className="text-sm font-bold text-slate-700 ml-1">Card đồ họa</label>
                       <input name="vga" defaultValue={editingProduct?.specification?.vga} className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl font-medium outline-none focus:border-blue-600 transition" />
                     </div>
                   </div>

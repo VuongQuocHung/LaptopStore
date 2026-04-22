@@ -17,6 +17,7 @@ public class UserSpecs {
         return (root, query, cb) -> phone == null ? null : cb.like(root.get("phone"), "%" + phone + "%");
     }
 
+    // Lọc theo roleId
     public static Specification<User> hasRoleId(Long roleId) {
         return (root, query, cb) -> roleId == null ? null : cb.equal(root.get("role").get("id"), roleId);
     }

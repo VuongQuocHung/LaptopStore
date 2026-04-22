@@ -50,7 +50,7 @@ public class UserController {
     @ApiResponse(responseCode = "200", description = "Thành công")
     @ApiResponse(responseCode = "400", description = "Lỗi dữ liệu đầu vào")
     public ResponseEntity<User> createUser(@RequestBody User user) {
-        // Normally password should be encrypted here
+        // mật khẩu sẽ được mã hóa trong service, nên có thể nhận thẳng từ request
         return ResponseEntity.ok(userService.createUser(user));
     }
 

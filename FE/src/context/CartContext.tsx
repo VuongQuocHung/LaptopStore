@@ -27,6 +27,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]); // ds sản phẩm trong giỏ hàng
   const [loadedCartKey, setLoadedCartKey] = useState<string | null>(null);
 
+  // sử dụng email người dùng để tạo key lưu trữ riêng biệt cho mỗi người dùng, nếu không có email thì dùng key chung cho guest
   const cartStorageKey = useMemo(() => {
     const normalizedEmail = user?.email?.trim().toLowerCase();
     return normalizedEmail ? `cart:${normalizedEmail}` : "cart:guest";

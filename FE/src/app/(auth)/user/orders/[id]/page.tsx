@@ -200,7 +200,7 @@ function OrderDetail() {
                           currency: "VND",
                         }).format((item.unitPrice || 0) * (item.quantity || 0))}
                       </p>
-                      <p className="text-xs text-slate-400 font-medium">
+                      <p className="text-xs text-slate-400 font-medium">  
                         {new Intl.NumberFormat("vi-VN", {
                           style: "currency",
                           currency: "VND",

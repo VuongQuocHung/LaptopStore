@@ -34,8 +34,8 @@ export default function AdminDashboard() {
       try {
         const [ordersRes, productsRes, usersRes] = await Promise.all([
           orderApi.getAll({ size: 100, page: 0, sortBy: "id", sortDir: "desc" }),
-          productApi.getAll({ size: 1, sortBy: "id", sortDir: "desc" }),
-          userApi.getAll({ size: 5, page: 0, sortBy: "id", sortDir: "desc" })
+          productApi.getAll({ size: 100, sortBy: "id", sortDir: "desc" }),
+          userApi.getAll({ size: 100, page: 0, sortBy: "id", sortDir: "desc" })
         ]);
 
         const allOrders = ordersRes.content || []; // lấy tất cả đơn hàng để tính doanh thu

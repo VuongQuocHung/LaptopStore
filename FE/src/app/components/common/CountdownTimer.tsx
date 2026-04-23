@@ -6,7 +6,7 @@ export const CountdownTimer = () => {
   const [time, setTime] = useState({ h: 4, m: 22, s: 58 });
 
   useEffect(() => {
-    const t = setInterval(() => {
+    const t = setInterval(() => { // setInterval để cập nhật thời gian mỗi giây 
       setTime((prev) => {
         let { h, m, s } = prev;
         s--;
@@ -22,7 +22,7 @@ export const CountdownTimer = () => {
         return { h, m, s };
       });
     }, 1000);
-    return () => clearInterval(t);
+    return () => clearInterval(t); // tránh memory leak khi component unmount
   }, []);
 
   const pad = (n: number) => String(n).padStart(2, "0");

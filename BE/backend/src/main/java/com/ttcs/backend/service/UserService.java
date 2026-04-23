@@ -108,13 +108,15 @@ public class UserService {
             user.setPassword(passwordEncoder.encode(userDetails.getPassword()));
         }
 
-        return userRepository.save(user);
+        // lưu user đã được cập nhật vào database
+        return userRepository.save(user)    ;
     }
 
     @Transactional
     public void deleteUser(Long id) {
         User user = getUserById(id); 
 
+        // không cho tự xóa tài khoản đang đăng nhập
         Long currentUserId = SecurityUtils.getCurrentUserId().orElse(null);
         if (currentUserId != null && currentUserId.equals(id)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Khong the tu xoa tai khoan dang dang nhap");

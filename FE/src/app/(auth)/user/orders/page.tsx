@@ -57,7 +57,7 @@ function OrdersList() {
           <Package className="w-10 h-10 text-slate-300" />
         </div>
         <h1 className="text-2xl font-black text-slate-900 mb-2 tracking-tighter">Bạn chưa có đơn hàng nào</h1>
-        <p className="text-slate-500 mb-8 max-w-sm">Hãy bắt đầu mua sắm để nhận nhiều ưu đãi hấp dẫn từ VPH STORE!</p>
+        <p className="text-slate-500 mb-8 max-w-sm">Hãy bắt đầu mua sắm để nhận nhiều ưu đãi hấp dẫn từ LAPTOP STORE!</p>
         <Link 
           href="/product/list" 
           className="bg-blue-600 text-white px-8 py-3 rounded-2xl font-black shadow-xl shadow-blue-100 hover:bg-blue-700 transition"

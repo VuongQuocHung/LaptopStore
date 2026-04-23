@@ -39,7 +39,7 @@ public class OrderController {
             @RequestParam(defaultValue = "asc") String sortDir) {
 
         Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
-        Pageable pageable = PageRequest.of(page, size, sort);
+        Pageable pageable = PageRequest.of(page, size, sort); // tạo đối tượng Pageable với thông tin phân trang và sắp xếp
         return ResponseEntity
                 .ok(orderService.getFilteredOrders(status, userId, phoneNumber, minAmount, maxAmount, pageable));
     }
